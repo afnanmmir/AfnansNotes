@@ -40,6 +40,7 @@
   {{$linkIndex := resources.Get "indices/linkIndex.json" | resources.Fingerprint "md5" | resources.Minify | }} {{$contentIndex := resources.Get "indices/contentIndex.json" | resources.Fingerprint "md5" | resources.Minify }}
   <script>
     const BASE_URL = {{.Site.BaseURL}}
+    // console.log(BASE_URL)
     const fetchData = Promise.all([
           fetch("{{ $linkIndex.Permalink }}")
             .then(data => data.json())
@@ -67,14 +68,14 @@
       if (!container) return requestAnimationFrame(draw)
       // clear the graph in case there is anything within it
       container.textContent = ""
-
+      console.log({{$.Site.Data.graphConfig.localGraph.depth}})
       drawGraph(
         {{strings.TrimRight "/" .Site.BaseURL}},
         {{$.Site.Data.graphConfig.paths}},
-        {{$.Site.Data.graphConfig.depth}},
-        {{$.Site.Data.graphConfig.enableDrag}},
-        {{$.Site.Data.graphConfig.enableLegend}},
-        {{$.Site.Data.graphConfig.enableZoom}}
+        {{$.Site.Data.graphConfig.localGraph.depth}},
+        {{$.Site.Data.graphConfig.localGraph.enableDrag}},
+        {{$.Site.Data.graphConfig.localGraph.enableLegend}},
+        {{$.Site.Data.graphConfig.localGraph.enableZoom}}
       );
 
       {{if $.Site.Data.config.enableLinkPreview}}
