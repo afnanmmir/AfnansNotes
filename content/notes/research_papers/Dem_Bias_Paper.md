@@ -4,6 +4,7 @@ tags:
 - machine learning
 - academic
 - research
+enableToc: true
 ---
 This paper can be found [here](https://arxiv.org/pdf/2008.03415.pdf) 
 # Summary

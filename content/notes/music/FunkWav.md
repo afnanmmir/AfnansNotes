@@ -3,6 +3,7 @@ title: "Funk Wav Bounces Vol. 1 by Calvin Harris"
 tags:
 - music
 - summer
+enableToc: true
 ---
 <iframe style="border-radius:12px" src="https://open.spotify.com/embed/album/2HaqChIDc5go3qxVunBDK0?utm_source=generator" width="100%" height="380" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
 

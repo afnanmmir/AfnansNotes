@@ -4,6 +4,7 @@ tags:
 - coding
 - software
 - binary trees
+enableToc: true
 ---
 This problem can be found [here](https://leetcode.com/problems/maximum-depth-of-binary-tree/)
 

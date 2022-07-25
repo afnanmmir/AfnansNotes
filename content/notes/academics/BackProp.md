@@ -4,6 +4,7 @@ tags:
 - software
 - machine learning
 - academic
+enableToc: true
 ---
 Before reading this, make sure to read the piece on [Gradient Descent](GradDesc.md), as this will build off of that piece.
 

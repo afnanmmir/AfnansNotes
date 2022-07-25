@@ -4,6 +4,7 @@ tags:
 - coding
 - software
 - greedy
+enableToc: true
 ---
 The problem can be found [here](https://leetcode.com/problems/jump-game-ii/)
 

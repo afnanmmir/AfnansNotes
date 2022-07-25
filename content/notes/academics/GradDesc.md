@@ -4,6 +4,7 @@ tags:
 - software
 - machine learning
 - academic
+enableToc: true
 ---
 # What is Gradient Descent?
 Gradient descent is an iterative first order optimization algorithm that is used to find local minima (or maxima) of functions. While there are many applications for this algorithm, probably the most notable is its applications in machine/deep learning.

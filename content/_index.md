@@ -11,9 +11,9 @@ Look through all the notes here:
 - [All Notes](/notes)
   
 or look through the content list for your favorite topic:
-- [Academic Things](/notes/academics)
-- [Research Papers](/notes/research_papers)
-- [Songs](/notes/songs)
-- [Thoughts](/notes/thoughts)
+- [Academic Things](notes/academics/)
+- [Research Papers](notes/research_papers/)
+- [Songs](notes/songs/)
+- [Thoughts](notes/thoughts/)
 - To be continued...
 

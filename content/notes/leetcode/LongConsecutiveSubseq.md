@@ -4,6 +4,7 @@ tags:
 - coding
 - software
 - hashing
+enableToc: true
 ---
 The problem can be found [here](https://leetcode.com/problems/longest-consecutive-sequence/submissions/)
 
