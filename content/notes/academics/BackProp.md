@@ -1,5 +1,5 @@
 ---
-title: Backpropagation
+title: "Backpropagation"
 tags:
 - software
 - machine learning
@@ -33,3 +33,33 @@ This also becomes the input of the next layer. We continuously compound more and
 
 This situation lends itself to the chain rule naturally, and we will be able to leverage the chain rule to more efficiently calculate the gradients.
 # The Algorithm
+To understand the algorithm, lets look at a simpler neural network:
+![Simple Neural Network](imgs/SimpleNeuralNet.png)
+Here we have the input layer, 1 hidden layer, and the output $y$. What is going to happen here? First, $x$ wil be passed into the hidden layer, and a linear transformation will be performed on it:
+ $$z = Wx + b$$
+with $W$ being a weight matrix and $b$ being a bias matrix. Then, a nonlinear transfer function will be performed on it:
+$$ h = f(z) $$
+This will be the output of the hidden layer. This will be inputted into the output layer, where a final function will be performed on the input:
+$$ s = u(h) $$
+and this will be our final output. Now, let's say we want to find $\frac{\partial s}{\partial b}$. To get to the parameter $b$, we have to go from the output function, back to through the output function and the nonlinear transfer function. By the chain rule, we then get that:
+$$ \frac{\partial s}{\partial b} = \frac{\partial s}{\partial h}\frac{\partial h}{\partial z}\frac{\partial z}{\partial b}$$
+This will get us the gradient with respect to $b$. Now, let's say we want to find the gradient with respect to $W$, the weight matrix. Again, we first have to go through the output function and the nonlinear transfer function. With the chain rule, we get:
+$$ \frac{\partial s}{\partial b} = \frac{\partial s}{\partial h}\frac{\partial h}{\partial z}\frac{\partial z}{\partial W}$$
+We can see that in both calculations, we have a commonality in $\frac{\partial s}{\partial h}\frac{\partial h}{\partial z}$, so calcualating the gradient for both parameters would result in duplicate computation. The backpropagation algorithm is made to avoid making these duplicate computations. Take the equation stack from before:
+$$ s = u(h) \\ \downarrow \\ h = f(z) \\ \downarrow \\ z = Wx + b \\ \downarrow \\ x. $$
+The idea is that at each level in the stack, we want to compute something, we can call this $\delta$, that we can pass down the stack when we want to compute the gradient with respect to parameter(s) lower in the stack, and this will prevent us from making duplicate computations. At the top level, we compute $\delta_0$ to be $\frac{\partial s}{\partial h}$. Then, in the second layer, we compute $\delta_1 = \delta_0 * \frac{\partial h}{\partial z}$. This $\delta_1$ will be passed down to the third layer, and can be used to calculate both $\frac{\partial s}{\partial W}$ and $\frac{\partial s}{\partial b}$:
+$$\frac{\partial s}{\partial W} = \delta_1 * \frac{\partial z}{\partial W}$$ 
+$$ \frac{\partial s}{\partial b} = \delta_1 * \frac{\partial z}{\partial b}$$
+As you can see, the $\delta$'s allow us to store previous gradient values that we can pass back down the network to be used to calculate further gradients without repeated computations. Formally, $\delta$ in each layer is called the local error signal.
+
+This becomes a scalable way to compute gradients of complex neural networks. As the number of layers, and the number of neurons increases, by holding the local error signal at each layer, we are still able to compute gradients efficiently.
+
+# Application in Software
+In theory, this is the backpropagation algorithm in its full form: we compute local error signals at each layer which is passed down to the lower layers to allow more efficient computation of gradients. But how is this implemented in software.
+
+In the real world, to perform this algorithm, computation graphs are created, where source nodes are the inputs, and interior nodes are the operations:
+![Computational Graph](imgs/CompGraph.png)
+This is similar to an expression tree. When determining the value of the output, this graph is evaluated identiacally to an expression tree. This differs, though, because at each node, we are able to store the local gradient at that node, which will be propagated back to all the nodes behind it, allowing us to calculate the gradients for each source node that will be used to update the parameters.
+
+# Summary and Final Thoughts
+This is the backpropagation algorithm in full. We store local error signals at each layer of the stack and pass them down the stack to allow us to compute gradients efficiently enough so we can update parameters of complex neural networks with adequate efficiency. This algorithm stands out to me so much because it requires extensive knowledge of concepts in both calculus and software engineering. In my head, the storing of local error signals reminds me of dynamic programming, similar to memoization. Additionally, creating computation graphs and expression trees is a foundational software engineering principle. The intersection of math and software engineering here makes a very elegant algorithm in my opinion.

@@ -1,5 +1,5 @@
 ---
-title: Stochastic Gradient Descent
+title: "Stochastic Gradient Descent"
 tags:
 - software
 - machine learning
