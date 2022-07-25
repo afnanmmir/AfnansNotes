@@ -1,5 +1,5 @@
 ---
-title: "Maximum Depth of Binary Tree"
+title: "Longest Consecutive Subsequence"
 tags:
 - coding
 - software

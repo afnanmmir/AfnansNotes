@@ -8,6 +8,9 @@ async function drawGraph(
 ) {
   const container = document.getElementById('graph-container')
   const { index, links, content } = await fetchData
+  console.log(index);
+  console.log(links);
+  console.log(content);
 
   // Use .pathname to remove hashes / searchParams / text fragments
   const cleanUrl = window.location.origin + window.location.pathname
