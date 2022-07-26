@@ -15,3 +15,5 @@ Here are my notes on various LeetCode problems
 - [Jumping Game II](notes/JumpingGameII.md)
 - [Decode Ways](notes/DecodeWays.md)
 - [Container With the Most Water](notes/WaterContainer.md)
+- [Maximum Area of Island](notes/MaxAreaIsland.md)
+- [Pacific Atlantic Water Flow](notes/PacAndAtl.md)
