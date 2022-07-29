@@ -17,3 +17,6 @@ Here are my notes on various LeetCode problems
 - [Container With the Most Water](notes/WaterContainer.md)
 - [Maximum Area of Island](notes/MaxAreaIsland.md)
 - [Pacific Atlantic Water Flow](notes/PacAndAtl.md)
+- [Unique Paths](notes/UniquePaths.md)
+- [Longest Common Subsequence](notes/LongestCommonSubseq.md)
+- [Coin Change II](notes/CoinChangeII.md)
