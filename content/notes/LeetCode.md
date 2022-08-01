@@ -20,3 +20,5 @@ Here are my notes on various LeetCode problems
 - [Unique Paths](notes/UniquePaths.md)
 - [Longest Common Subsequence](notes/LongestCommonSubseq.md)
 - [Coin Change II](notes/CoinChangeII.md)
+- [Grid Game](notes/GridGame.md)
+- [Maximum Subsequence](notes/MaxSub.md)
