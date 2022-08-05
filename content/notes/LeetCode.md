@@ -22,3 +22,4 @@ Here are my notes on various LeetCode problems
 - [Coin Change II](notes/CoinChangeII.md)
 - [Grid Game](notes/GridGame.md)
 - [Maximum Subsequence](notes/MaxSub.md)
+- [Diameter of a Binary Tree](notes/Diameter.md)
