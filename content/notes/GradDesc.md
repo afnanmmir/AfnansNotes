@@ -30,7 +30,7 @@ where $y'$ is the predicted value, $W$ is the slope of the line, and $b$ is the 
  $$b_{new} = b_{old} - \alpha\frac{\partial J}{\partial b}$$
  Now, we dissect this formula. We take our current point, find the direction of steepest descent, and we take a scaled step in that direction, with $\alpha$ being the scaling factor (also called the learning rate). $\alpha$ is what we call a hyperparameter whose value is determined by the user. At each time step we perform this algorithm, as we slowly make our way down to the minimum point of the loss function, and at the point of convergence (or close to it) is the values of $W$ and $b$ we use. An image is shown for a visual example:
  
- ![Gradient Descent](notes/images/GradDesc.jpg)
+ ![Gradient Descent](images/GradDesc.jpg)
 
 In choosing $\alpha$, we have to be careful. If we choose a value too small, we will take a really long time to converge, and if we pick a value too big, we will never converge, as our step sizes can skip the minimum entirely.
 

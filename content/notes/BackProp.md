@@ -13,7 +13,7 @@ From the gradient descent article, we saw that given input data $X$ and output d
 $$\Theta_{new} = \Theta_{old} - \alpha\nabla(J(\Theta))$$
 where $\alpha$ is a hyperparameter of the learning rate. Computing the gradient for each parameter in this case does not require much effort, as there are no complex functions, and there aren't a significant amount of parameters to account for.
 However, consider the following picture:
-![Neural Network](notes/images/neuralnet.png)
+![Neural Network](images/neuralnet.png)
 
 Here we see 4 layers: the input, 2 hidden layers, and the output layer. Each component of the input layer is sent to all 4 of the nodes in the first hidden layer, and each node in the first hidden layer is passed to each node in the second hidden layer etc. At each node, except for the input, the input data into the node is first transformed linearly, similar to $Wx + b$. However, the input is then transformed with some nonlinear function. We can see here that the amount of parameters greatly increases as our machine learning architectures become more complex. Each node in hidden layer 1 has weights associated with each input node, and each node in hidden layer 2 has weights associated with each node in hidden layer 1. Additionally, the nonlinearities adds another level of complexity. We can see that as the compelxity of the architecture increases, it becomes more and more computationally expensive to go and calculate the gradient of every single parameter of the network individually. So, how can we do this in an efficient way such that we don't lose as much time calculating all the gradients.
 
@@ -23,7 +23,7 @@ $$\frac{\mathrm{d}g}{\mathrm{d}x} = \frac{\mathrm{d}g}{\mathrm{d}f} * \frac{\mat
 As you can, when we compound functions, we begin multiplying derivatives in order to calculate the full derivative. We can leverage this when calculating gradients for deep neural networks.
 # Applying the Chain Rule to Neural Network Gradient Descent
 Consider the following neural network:
-![NeuralNet](notes/images/neuralnet.png)
+![NeuralNet](images/neuralnet.png)
 We have 4 total layers: one input layer, 2 hidden layers, and one output layer. The inputs normally are multidimensional feature vectors. This feature vector is fed into each node in the first hidden layer. In each node of the first hidden layer, there exists a set of parameters $W$ and $b$. These parameters allow us to perform a linear transformation on the feature vector $x$, creating $z = Wx + b$. Since $x$ is multidimensional, and each input node is connected to each hidden layer node, $W$ and $b$ both end up being matrices containing multiple parameters. After performing the linear transformation, the hidden layer performs a nonlinear transfer function $y = h(z)$. This becomes the output of the hidden layer. It also becomes the input of the next hidden layer. In the next hidden layer, the same process takes place, but with different $W$ and $b$ matrix values. This is repeated until we get to the output layer, where we finally get the final values.
 
 Clearly with the fully connected network of neurons, and all the weights and biases associated with each neuron, and the nonlinearity applied at each neuron, calculating the gradients of each parameter would be a very cumbersome and computationally expensive process. However, we can greatly expedite this process using the chain rule. Going through the network, we can see that all we are really doing is repeatedly compounding functions onto the original input layer. We take the input, we call $x_0$, and we pass it into the first hidden layer, where we perform a linear transformation:
@@ -35,7 +35,7 @@ This also becomes the input of the next layer. We continuously compound more and
 This situation lends itself to the chain rule naturally, and we will be able to leverage the chain rule to more efficiently calculate the gradients.
 # The Algorithm
 To understand the algorithm, lets look at a simpler neural network:
-![Simple Neural Network](notes/images/SimpleNeuralNet.png)
+![Simple Neural Network](images/SimpleNeuralNet.png)
 Here we have the input layer, 1 hidden layer, and the output $y$. What is going to happen here? First, $x$ wil be passed into the hidden layer, and a linear transformation will be performed on it:
  $$z = Wx + b$$
 with $W$ being a weight matrix and $b$ being a bias matrix. Then, a nonlinear transfer function will be performed on it:
@@ -59,7 +59,7 @@ This becomes a scalable way to compute gradients of complex neural networks. As 
 In theory, this is the backpropagation algorithm in its full form: we compute local error signals at each layer which is passed down to the lower layers to allow more efficient computation of gradients. But how is this implemented in software.
 
 In the real world, to perform this algorithm, computation graphs are created, where source nodes are the inputs, and interior nodes are the operations:
-![Computational Graph](notes/images/CompGraph.png)
+![Computational Graph](images/CompGraph.png)
 This is similar to an expression tree. When determining the value of the output, this graph is evaluated identiacally to an expression tree. This differs, though, because at each node, we are able to store the local gradient at that node, which will be propagated back to all the nodes behind it, allowing us to calculate the gradients for each source node that will be used to update the parameters.
 
 # Summary and Final Thoughts
