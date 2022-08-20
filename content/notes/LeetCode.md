@@ -24,3 +24,5 @@ Here are my notes on various LeetCode problems
 - [Maximum Subsequence](notes/MaxSub.md)
 - [Diameter of a Binary Tree](notes/Diameter.md)
 - [House Robber](notes/HouseRobber.md)
+- [Task Scheduler](notes/TaskSched.md)
+- [Reorder List](notes/ReorderList.md)
