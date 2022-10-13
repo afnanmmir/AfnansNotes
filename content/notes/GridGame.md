@@ -21,7 +21,7 @@ If both robots play optimally, determine the number of points the second robot w
 The intuitive approach for this problem is for the first robot to collect as many points as it can on its path, and then have the second robot collect as many points as it can, and then return that value. However, this approach ends up being flawed, so a different approach is needed.
 
 If you notice carefully, you will see that because the robots can only move down and to the right, the first robot, no matter what, will collect some amount of points from the first row, then go down to the second row and collect some amount of points until it reaches the end. Then, the second robot will only be able to either collect points from the top right section, or the bottom left section. It can better be seen in this picture, where the red line depicts a possible path for the first robot, and the blue circles show the regions where the second robot can earn its points:
-![Grid Game](images/GridGamePic.png)
+![Grid Game](/content/notes/images/GridGamePic.png)
 
 Thus, the goal for the first robot will be to go down to the second row at a time such that the amount of points the second robot can earn from the top right or the bottom left is minimum. 
 
