@@ -27,5 +27,5 @@ Here are my notes on various LeetCode problems
 - [Task Scheduler](notes/TaskSched.md)
 - [Reorder List](notes/ReorderList.md)
 - [Word Break](notes/WordBreak.md)
-- [LRU Cache](LRUCache.md)
-- 
+- [LRU Cache](notes/LRUCache.md)
+- [Design Browser History](notes/Browser.md)
