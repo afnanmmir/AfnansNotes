@@ -13,7 +13,7 @@ From the gradient descent article, we saw that given input data $X$ and output d
 $$\Theta_{new} = \Theta_{old} - \alpha\nabla(J(\Theta))$$
 where $\alpha$ is a hyperparameter of the learning rate. Computing the gradient for each parameter in this case does not require much effort, as there are no complex functions, and there aren't a significant amount of parameters to account for.
 However, consider the following picture:
-![Neural Network](images/neuralnet.png)
+![Neural Network](/notes/images/neuralnet.png)
 
 Here we see 4 layers: the input, 2 hidden layers, and the output layer. Each component of the input layer is sent to all 4 of the nodes in the first hidden layer, and each node in the first hidden layer is passed to each node in the second hidden layer etc. At each node, except for the input, the input data into the node is first transformed linearly, similar to $Wx + b$. However, the input is then transformed with some nonlinear function. We can see here that the amount of parameters greatly increases as our machine learning architectures become more complex. Each node in hidden layer 1 has weights associated with each input node, and each node in hidden layer 2 has weights associated with each node in hidden layer 1. Additionally, the nonlinearities adds another level of complexity. We can see that as the compelxity of the architecture increases, it becomes more and more computationally expensive to go and calculate the gradient of every single parameter of the network individually. So, how can we do this in an efficient way such that we don't lose as much time calculating all the gradients.
 
