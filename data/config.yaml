@@ -3,16 +3,26 @@ enableToc: true
 openToc: true
 enableLinkPreview: true
 enableLatex: true
+enableCodeBlockTitle: true
+enableCodeBlockCopy: true
+enableCallouts: true
 enableSPA: true
 enableFooter: true
 enableContextualBacklinks: true
 enableRecentNotes: false
+enableGitHubEdit: true
+enableMermaid: true
+GitHubLink: https://github.com/jackyzha0/quartz/tree/hugo/content
+search:
+  enableSemanticSearch: true
+  operandApiKey: "REPLACE-WITH-YOUR-OPERAND-API-KEY"
+  operandIndexId: "REPLACE-WITH-YOUR-OPERAND-INDEX-ID"
 description:
   A space to hold Afnan Mir's thoughts
 page_title:
-  "Afnan's Mind"
+  "🪴 Quartz 3.3"
 links:
-  - link_name: Linkedin
+  - link_name: LinkedIn
     link: https://www.linkedin.com/in/afnan-mir/
-  - link_name: Github
+  - link_name: GitHub
     link: https://github.com/afnanmmir
