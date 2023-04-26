@@ -15,11 +15,13 @@ function parseSearchResults(searchResults) {
 }
 
 async function searchContents(query) {
+  // const cors = require('cors');
+  // console.log(cors);
   const result = await fetch("https://api.operand.ai/operand.v1.ObjectService/SearchWithin", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `${apiKey}`,
+      Authorization: `Key ${apiKey}`,
       "Operand-Index-ID": `${indexId}`,
     },
     body: JSON.stringify({
