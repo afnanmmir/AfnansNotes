@@ -14,7 +14,7 @@ enableGitHubEdit: false
 enableMermaid: true
 GitHubLink: https://github.com/jackyzha0/quartz/tree/hugo/content
 search:
-  enableSemanticSearch: true
+  enableSemanticSearch: false
   operandApiKey: "eogtlj2xq4hjer24b8coat5818294wjs"
   operandIndexId: "hn52azi1brr67w77"
 description:
