@@ -5,7 +5,7 @@ tags:
 - software
 - stack
 ---
-The problem can be found [here](https://leetcode.com/problems/design-browser-history/submissions/)
+The problem can be found [here](https://leetcode.com/problems/design-browser-history/)
 
 # The Problem
 You have a browswer of one tap where you start at `homepage` and can visit another `url`, get back in the history some number of `steps` or move forward in the history some number of `steps`.
