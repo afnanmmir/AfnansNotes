@@ -30,3 +30,5 @@ Here are my notes on various LeetCode problems
 - [LRU Cache](notes/LRUCache.md)
 - [Design Browser History](notes/Browser.md)
 - [Design Twitter](notes/DesignTwitter.md)
+- [Permutation in String](notes/PermutationInString.md)
+- [Course Schedule](notes/CourseSchedule.md)
