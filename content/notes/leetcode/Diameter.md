@@ -1,5 +1,5 @@
 ---
-title: "Jump Game II"
+title: "Diameter of a Binary Tree"
 tags:
 - coding
 - software
