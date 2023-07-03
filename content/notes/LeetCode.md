@@ -22,7 +22,7 @@ Here are my notes on various LeetCode problems
 - [Coin Change II](notes/leetcode/CoinChangeII.md)
 - [Grid Game](notes/leetcode/GridGame.md)
 - [Maximum Subsequence](notes/leetcode/MaxSub.md)
-- [Diameter of a Binary Tree](notes/leetcode/leetcode/Diameter.md)
+- [Diameter of a Binary Tree](notes/leetcode/Diameter.md)
 - [House Robber](notes/leetcode/HouseRobber.md)
 - [Task Scheduler](notes/leetcode/TaskSched.md)
 - [Reorder List](notes/leetcode/ReorderList.md)
