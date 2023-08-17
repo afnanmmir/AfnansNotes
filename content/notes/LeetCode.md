@@ -34,3 +34,5 @@ Here are my notes on various LeetCode problems
 - [Course Schedule](notes/leetcode/CourseSchedule.md)
 - [Course Schedule II](notes/leetcode/CourseScheduleII.md)
 - [Search A 2-D Matrix](notes/leetcode/Search2DMatrix.md)
+- [Find Minimum in Rotated Sorted Array](notes/leetcode/minimumrotated.md)
+- [Longest Palindrome by Concantenating Two Letter Words](notes/leetcode/LongestPalindrome.md)
