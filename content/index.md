@@ -2,19 +2,10 @@
 title: Afnan's Mind
 ---
 
-Welcome to my digital brain, a place for me to plant my thoughts and let them grow. This space will hold everything from academic concepts that interest me, to research papers that catch my eye, to songs I can't stop listening to and anything in between. Who knows what I'll end up putting here...
+Welcome to my digital sanbox, a place for me to put notes on various topics I am trying to learn more about and document my thoughts on various topics. Notes will likely be on the topic of software, machine learning and systems (but other topics may be added if I gain new interests 🙂). Thoughts I have can be of any topic, from academic, to music, to sports, to people, and to everything else.
 
-Feel free to search for a note that may interest you, or
 
-Look through all the notes here:
+Feel free to search for a note by their titles or tags and have fun reading.
 
-- [All Notes](/notes)
-  
-or look through the content list for your favorite topic:
-- [Academic Things](/notes/Academics.md)
-- [Research Papers](/notes/ResearchPapers.md)
-- [Songs](/notes/Music.md)
-- [LeetCode Problems](/notes/LeetCode.md)
-- [Thoughts](/notes/Thoughts.md)
-- To be continued...
+This is mainly a personal space for me to put down my thoughts and notes, but if you happen to stumble upon this site, I hope you find something interesting or useful.
 

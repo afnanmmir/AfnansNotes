@@ -5,7 +5,7 @@ tags:
 - personal
 enableToc: true
 ---
-![Friday Night Lights](/notes/images/fnl.jpg)
+![Friday Night Lights](/thoughts/images/fnl.jpg)
 This picture shown above is by no means the best picture ever taken. You can see the top of someone's head creep into the bottom of the frame, and if you stare long enough, you can see that the picture is tilted in the horizontal direction. However, this is still probably my favorite picture that I have taken because it captures the full essence of one of my favorite times in my life: Friday Night Lights.
 
 I was a part of the marching band in high school, which meant that I went to every single high school football game, and being from the North Texas area, where high school football is, for better or for worse, of utmost importance as far as the school district was concerned, this brought many unique experiences, whether it be visiting the absurd high school stadiums of Allen High School and Prosper High School, or taking part in game day festivities such as pep rallies and marches. 

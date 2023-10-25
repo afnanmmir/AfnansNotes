@@ -11,10 +11,13 @@ Gradient descent is an iterative first order optimization algorithm that is used
 
 # What is a gradient?
 First, we define what a gradient is. For a univariate function, the gradient is simply the first derivative of the function. So for example if we have the function $y = x^3$, we can say that the gradient at point is $\frac{\mathrm{d}y}{\mathrm{d}x}= 3x^2$. Now, if we extend this to a multivariate function of $n$ variables with one output, $f(x_1,x_2,\dots, x_n)$ the gradient would be an n-dimensional vector with the $i$th entry being the partial derivative of f with respect to $x_i$:
-$$\nabla(f) = \begin{bmatrix}\frac{\partial f}{\partial x_1} \\ 
-\frac{\partial f}{\partial x_2} \\ 
-\vdots \\ 
-\frac{\partial f}{\partial x_n} \end{bmatrix}$$
+
+<p align="center">
+
+$$ \nabla(f) = \begin{bmatrix}\frac{\partial f}{\partial x_1} \\ \frac{\partial f}{\partial x_2} \\ \vdots \\ \frac{\partial f}{\partial x_n} \end{bmatrix} $$
+
+</p>
+
 This can be further extended to a multivariate function with $m$ outputs, which would create an $n * m$ matrix, with each column $i$ being all the partial derivatives for output $y_i$. The gradient defines the direction of the greatest/fastest increase in the function at a point. This also means that the negative gradient would be the greatest/fastest decrease in the function at a point, and it is this fact that we leverage in order to use gradient descent for to train machine learning models.
 
 # The Algorithm
@@ -24,10 +27,14 @@ where $y'$ is the predicted value, $W$ is the slope of the line, and $b$ is the 
  and $b$, $J(W,b)$. We can use gradient descent with $W$ and $b$ being the input variables to minimize this function.
  
  The algorithm is as follows (We represent $W$ and $b$ as $\Theta$, the set of parameters of the function):
+
  $$\Theta_{new} = \Theta_{old} - \alpha\nabla(J(\Theta))$$
+ 
  In terms of $W$ and $b$:
+
  $$W_{new} = W_{old} - \alpha\frac{\partial J}{\partial W}$$
  $$b_{new} = b_{old} - \alpha\frac{\partial J}{\partial b}$$
+ 
  Now, we dissect this formula. We take our current point, find the direction of steepest descent, and we take a scaled step in that direction, with $\alpha$ being the scaling factor (also called the learning rate). $\alpha$ is what we call a hyperparameter whose value is determined by the user. At each time step we perform this algorithm, as we slowly make our way down to the minimum point of the loss function, and at the point of convergence (or close to it) is the values of $W$ and $b$ we use. An image is shown for a visual example:
  
  ![Gradient Descent](/notes/images/GradDesc.jpg)
