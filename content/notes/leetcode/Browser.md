@@ -1,7 +1,6 @@
 ---
 title: "Design Browser History"
 tags:
-- coding
 - software
 - stack
 ---

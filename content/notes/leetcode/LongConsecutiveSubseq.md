@@ -1,7 +1,6 @@
 ---
 title: "Longest Consecutive Subsequence"
 tags:
-- coding
 - software
 - hashing
 enableToc: true

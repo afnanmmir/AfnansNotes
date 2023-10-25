@@ -1,7 +1,6 @@
 ---
 title: "Container with the Most Water"
 tags:
-- coding
 - software
 - arrays
 - two pointer

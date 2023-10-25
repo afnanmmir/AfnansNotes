@@ -1,7 +1,6 @@
 ---
 title: "Unique Paths"
 tags:
-- coding
 - software
 - dynamic programming
 ---

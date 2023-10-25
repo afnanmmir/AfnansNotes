@@ -1,7 +1,6 @@
 ---
 title: "Longest Substring of All Vowels in Order"
 tags:
-- coding
 - software
 - sliding window
 ---

@@ -1,7 +1,6 @@
 ---
 title: "House Robber"
 tags:
-- coding
 - software
 - dynamic programming
 enableToc: true

@@ -1,7 +1,6 @@
 ---
 title: "Search A 2-D Matrix"
 tags:
-- coding
 - software
 - Binary Search
 enableToc: true

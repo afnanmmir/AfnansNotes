@@ -1,7 +1,6 @@
 ---
 title: "Grid Game"
 tags:
-- coding
 - software
 - greedy
 enableToc: true

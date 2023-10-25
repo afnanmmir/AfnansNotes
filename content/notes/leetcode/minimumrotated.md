@@ -1,7 +1,6 @@
 ---
 title: "Find Minimum in Rotated Sorted Array"
 tags:
-- coding
 - software
 - arrays
 - binary search

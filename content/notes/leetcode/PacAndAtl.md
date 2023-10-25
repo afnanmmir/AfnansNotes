@@ -1,7 +1,6 @@
 ---
 title: "Pacific Atlantic Water Flow"
 tags:
-- coding
 - software
 - graphs
 enableToc: true

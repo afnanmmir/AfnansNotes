@@ -1,7 +1,6 @@
 ---
 title: "Longest Palindrome by Concatenating Two Letter Words"
 tags:
-- coding
 - software
 - arrays
 - strings

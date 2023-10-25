@@ -1,7 +1,6 @@
 ---
 title: "Max Area of Island"
 tags:
-- coding
 - software
 - graphs
 enableToc: true

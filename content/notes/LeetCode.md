@@ -3,8 +3,6 @@ title: "Leet Code Problems"
 tags:
 - academic
 - software
-- coding
-- learning
 enableToc: true
 ---
 

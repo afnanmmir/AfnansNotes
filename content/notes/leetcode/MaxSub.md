@@ -1,7 +1,6 @@
 ---
 title: "Maximum Subarray"
 tags:
-- coding
 - software
 - greedy
 enableToc: true

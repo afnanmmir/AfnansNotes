@@ -1,7 +1,6 @@
 ---
 title: "Task Scheduler"
 tags:
-- coding
 - software
 - heaps
 - greedy

@@ -1,9 +1,8 @@
 ---
 title: "Diameter of a Binary Tree"
 tags:
-- coding
 - software
-- trees
+- binary-trees
 enableToc: true
 ---
 

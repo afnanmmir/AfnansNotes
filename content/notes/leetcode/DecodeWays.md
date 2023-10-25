@@ -1,7 +1,6 @@
 ---
 title: "Decode Ways"
 tags:
-- coding
 - software
 - Dynamic Programming
 ---

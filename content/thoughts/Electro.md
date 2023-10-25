@@ -2,7 +2,6 @@
 title: "The Electro Suite by Hans Zimmer, The Magnificent Six, Pharrell Williams, and Johnny Marr"
 tags:
 - music
-- workout
 - movies
 enableToc: true
 ---

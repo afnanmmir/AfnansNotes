@@ -1,7 +1,6 @@
 ---
 title: "Maximum Depth of Binary Tree"
 tags:
-- coding
 - software
 - binary trees
 enableToc: true

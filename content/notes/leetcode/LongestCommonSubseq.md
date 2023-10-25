@@ -1,7 +1,6 @@
 ---
 title: "Longest Common Subsequence"
 tags:
-- coding
 - software
 - dynamic programming
 enableToc: true

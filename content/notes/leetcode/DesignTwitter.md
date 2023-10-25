@@ -1,7 +1,6 @@
 ---
 title: "Design Twitter"
 tags:
-- coding
 - software
 - heaps
 ---

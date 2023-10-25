@@ -1,7 +1,6 @@
 ---
 title: "LRU Cache"
 tags:
-- coding
 - software
 - Linked List
 - HashMap

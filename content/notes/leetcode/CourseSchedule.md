@@ -1,7 +1,6 @@
 ---
 title: "Course Schedule"
 tags:
-- coding
 - software
 - graph
 ---

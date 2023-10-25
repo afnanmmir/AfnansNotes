@@ -1,7 +1,6 @@
 ---
 title: "Jump Game II"
 tags:
-- coding
 - software
 - greedy
 enableToc: true

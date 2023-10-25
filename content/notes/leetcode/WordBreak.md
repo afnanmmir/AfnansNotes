@@ -1,10 +1,7 @@
 ---
 title: "Word Break"
 tags:
-- coding
 - software
-- arrays
-- dynamic programming
 ---
 
 The problem can be found [here](https://leetcode.com/problems/word-break/)

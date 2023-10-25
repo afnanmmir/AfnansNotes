@@ -1,7 +1,6 @@
 ---
 title: "Coin Change II"
 tags:
-- coding
 - software
 - Dynamic Programming
 ---

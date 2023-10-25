@@ -1,7 +1,6 @@
 ---
 title: "Product of Array Except Self"
 tags:
-- coding
 - software
 - arrays
 enableToc: true

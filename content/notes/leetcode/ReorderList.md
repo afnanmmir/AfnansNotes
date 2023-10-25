@@ -1,7 +1,6 @@
 ---
 title: "Reorder List"
 tags:
-- coding
 - software
 - linked list
 enableToc: true

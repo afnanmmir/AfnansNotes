@@ -1,7 +1,6 @@
 ---
 title: "Permutation in String"
 tags:
-- coding
 - software
 - sliding window
 ---
