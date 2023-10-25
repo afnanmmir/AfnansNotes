@@ -9,7 +9,7 @@ const config: QuartzConfig = {
     analytics: {
       provider: "plausible",
     },
-    baseUrl: "afnanmmir.github.io/AfnanNotes/",
+    baseUrl: "afnanmmir.github.io/AfnansNotes/",
     ignorePatterns: ["private", "templates", ".obsidian"],
     defaultDateType: "created",
     theme: {
