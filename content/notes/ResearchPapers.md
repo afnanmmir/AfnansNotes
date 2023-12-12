@@ -1,7 +1,7 @@
 ---
 title: "Research Papers"
 date: 2022-07-25
-date: 2022-07-25
+lastmod: 2022-07-25
 tags:
 - academic
 - research
