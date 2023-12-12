@@ -1,5 +1,6 @@
 ---
 title: "Academic Stuff" 
+date: 2022-07-25
 tags:
 - academic
 enableToc: true

@@ -1,5 +1,6 @@
 ---
 title: "Friday Night Lights" 
+date: 2023-05-05
 tags:
 - thoughts
 - personal

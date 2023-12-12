@@ -1,5 +1,6 @@
 ---
 title: "Course Schedule"
+date: 2023-06-26
 tags:
 - software
 - graph

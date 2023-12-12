@@ -1,5 +1,6 @@
 ---
 title: "Maximum Subarray"
+date: 2022-07-30
 tags:
 - software
 - greedy

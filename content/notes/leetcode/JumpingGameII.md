@@ -1,5 +1,6 @@
 ---
 title: "Jump Game II"
+date: 2022-07-24
 tags:
 - software
 - greedy

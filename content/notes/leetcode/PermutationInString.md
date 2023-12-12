@@ -1,5 +1,6 @@
 ---
 title: "Permutation in String"
+date: 2023-06-26
 tags:
 - software
 - sliding window

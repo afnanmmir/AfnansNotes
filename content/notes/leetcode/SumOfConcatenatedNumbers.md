@@ -1,5 +1,6 @@
 ---
 title: "Longest Palindrome by Concatenating Two Letter Words"
+date: 2023-08-17
 tags:
 - software
 - strings

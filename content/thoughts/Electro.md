@@ -1,5 +1,6 @@
 ---
 title: "The Electro Suite by Hans Zimmer, The Magnificent Six, Pharrell Williams, and Johnny Marr"
+date: 2022-07-24
 tags:
 - music
 - movies

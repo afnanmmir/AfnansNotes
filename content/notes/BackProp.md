@@ -1,5 +1,6 @@
 ---
 title: "Backpropagation" 
+date: 2022-07-14
 tags:
 - software
 - machine learning

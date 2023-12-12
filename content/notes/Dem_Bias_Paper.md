@@ -1,5 +1,6 @@
 ---
 title: "Assessing Demographic Bias in Named Entity Recognition"
+date: 2022-07-24
 tags:
 - machine learning
 - academic

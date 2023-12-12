@@ -1,5 +1,6 @@
 ---
 title: "Design Browser History"
+date: 2022-10-25
 tags:
 - software
 - stack

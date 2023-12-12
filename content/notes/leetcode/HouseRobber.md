@@ -1,5 +1,6 @@
 ---
 title: "House Robber"
+date: 2022-08-07
 tags:
 - software
 - dynamic programming

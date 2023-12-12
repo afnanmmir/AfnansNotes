@@ -1,5 +1,6 @@
 ---
 title: "Stochastic Gradient Descent"
+date: 2022-06-29
 tags:
 - software
 - machine learning

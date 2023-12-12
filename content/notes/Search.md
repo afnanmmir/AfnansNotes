@@ -1,5 +1,6 @@
 ---
 title: "Search"
+date: 2023-12-10
 tags:
 - software
 - nlp

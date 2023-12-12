@@ -1,5 +1,6 @@
 ---
 title: "LRU Cache"
+date: 2022-10-23
 tags:
 - software
 - Linked List
