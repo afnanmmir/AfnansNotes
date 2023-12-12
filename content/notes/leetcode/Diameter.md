@@ -1,6 +1,7 @@
 ---
 title: "Diameter of a Binary Tree"
 date: 2022-08-05
+lastmod: 2023-06-06
 tags:
 - software
 - binary-trees

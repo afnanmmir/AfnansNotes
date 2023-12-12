@@ -1,6 +1,7 @@
 ---
 title: "Decode Ways"
 date: 2022-07-24
+lastmod: 2022-07-24
 tags:
 - software
 - Dynamic Programming

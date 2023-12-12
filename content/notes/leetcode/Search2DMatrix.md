@@ -1,6 +1,7 @@
 ---
 title: "Search A 2-D Matrix"
 date: 2023-07-23
+lastmod: 2023-07-23
 tags:
 - software
 - Binary Search

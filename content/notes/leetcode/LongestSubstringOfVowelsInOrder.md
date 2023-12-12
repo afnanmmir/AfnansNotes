@@ -1,6 +1,7 @@
 ---
 title: "Longest Substring of All Vowels in Order"
 date: 2023-07-23
+lastmod: 2023-07-23
 tags:
 - software
 - sliding window
