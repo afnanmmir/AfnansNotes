@@ -1,6 +1,7 @@
 ---
 title: "My Thoughts on BeReal"
 date: 2022-08-22
+lastmod: 2022-08-22
 tags:
 - thoughts
 - social media

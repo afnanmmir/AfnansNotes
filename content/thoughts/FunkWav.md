@@ -1,6 +1,7 @@
 ---
 title: "Funk Wav Bounces Vol. 1 by Calvin Harris"
 date: 2022-07-24
+lastmod: 2022-07-24
 tags:
 - music
 enableToc: true
