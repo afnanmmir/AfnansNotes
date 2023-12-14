@@ -3,7 +3,7 @@ title: "Permutation in String"
 date: 2023-06-26
 lastmod: 2023-06-26
 tags:
-- software
+- leetcode
 - sliding window
 ---
 The problem can be found [here](https://leetcode.com/problems/permutation-in-string/)

@@ -3,7 +3,7 @@ title: "Reorder List"
 date: 2022-08-19
 lastmod: 2022-08-19
 tags:
-- software
+- leetcode
 - linked list
 enableToc: true
 ---

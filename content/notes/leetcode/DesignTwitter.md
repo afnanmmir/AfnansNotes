@@ -3,7 +3,7 @@ title: "Design Twitter"
 date: 2023-06-06
 lastmod: 2023-06-06
 tags:
-- software
+- leetcode
 - heaps
 ---
 The problem can be found [here](https://leetcode.com/problems/design-twitter/)

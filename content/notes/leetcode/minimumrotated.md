@@ -3,7 +3,7 @@ title: "Find Minimum in Rotated Sorted Array"
 date: 2023-08-16
 lastmod: 2023-08-16
 tags:
-- software
+- leetcode
 - arrays
 - binary search
 enableToc: true

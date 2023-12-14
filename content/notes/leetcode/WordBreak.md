@@ -3,7 +3,8 @@ title: "Word Break"
 date: 2022-08-22
 lastmod: 2022-08-22
 tags:
-- software
+- leetcode
+- dynamic programming
 ---
 
 The problem can be found [here](https://leetcode.com/problems/word-break/)

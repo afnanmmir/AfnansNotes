@@ -3,7 +3,7 @@ title: "Longest Substring of All Vowels in Order"
 date: 2023-07-23
 lastmod: 2023-07-23
 tags:
-- software
+- leetcode
 - sliding window
 ---
 The problem can be found [here](https://leetcode.com/problems/longest-substring-of-all-vowels-in-order/)

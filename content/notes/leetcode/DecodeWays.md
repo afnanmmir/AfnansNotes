@@ -3,8 +3,8 @@ title: "Decode Ways"
 date: 2022-07-24
 lastmod: 2022-07-24
 tags:
-- software
-- Dynamic Programming
+- leetcode
+- dynamic programming
 ---
 
 The problem can be found [here](https://leetcode.com/problems/decode-ways/)

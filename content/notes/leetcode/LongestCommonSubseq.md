@@ -3,7 +3,7 @@ title: "Longest Common Subsequence"
 date: 2022-07-29
 lastmod: 2022-07-29
 tags:
-- software
+- leetcode
 - dynamic programming
 enableToc: true
 ---

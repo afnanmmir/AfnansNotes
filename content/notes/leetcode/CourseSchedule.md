@@ -3,7 +3,7 @@ title: "Course Schedule"
 date: 2023-06-26
 lastmod: 2023-06-26
 tags:
-- software
+- leetcode
 - graph
 ---
 The problem can be found [here](https://leetcode.com/problems/course-schedule/).

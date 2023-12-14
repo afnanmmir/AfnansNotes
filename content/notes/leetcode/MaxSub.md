@@ -3,7 +3,7 @@ title: "Maximum Subarray"
 date: 2022-07-30
 lastmod: 2022-07-30
 tags:
-- software
+- leetcode
 - greedy
 enableToc: true
 ---

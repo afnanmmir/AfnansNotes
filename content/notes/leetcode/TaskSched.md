@@ -3,7 +3,7 @@ title: "Task Scheduler"
 date: 2022-08-10
 lastmod: 2022-08-10
 tags:
-- software
+- leetcode
 - heaps
 - greedy
 ---

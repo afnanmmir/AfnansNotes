@@ -3,7 +3,7 @@ title: "Longest Consecutive Subsequence"
 date: 2022-07-24
 lastmod: 2022-07-24
 tags:
-- software
+- leetcode
 - hashing
 enableToc: true
 ---

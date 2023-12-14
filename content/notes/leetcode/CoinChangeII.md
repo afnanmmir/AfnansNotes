@@ -3,7 +3,7 @@ title: "Coin Change II"
 date: 2022-07-24
 lastmod: 2022-07-24
 tags:
-- software
+- leetcode
 - Dynamic Programming
 ---
 The problem can be found [here](https://leetcode.com/problems/coin-change-2/)

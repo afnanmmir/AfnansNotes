@@ -3,7 +3,7 @@ title: "Design Browser History"
 date: 2022-10-25
 lastmod: 2022-10-25
 tags:
-- software
+- leetcode
 - stack
 ---
 The problem can be found [here](https://leetcode.com/problems/design-browser-history/)

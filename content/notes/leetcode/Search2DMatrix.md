@@ -3,8 +3,8 @@ title: "Search A 2-D Matrix"
 date: 2023-07-23
 lastmod: 2023-07-23
 tags:
-- software
-- Binary Search
+- leetcode
+- binary search
 enableToc: true
 ---
 The problem can be found [here](https://leetcode.com/problems/search-a-2d-matrix/).

@@ -3,9 +3,9 @@ title: "LRU Cache"
 date: 2022-10-23
 lastmod: 2022-10-23
 tags:
-- software
-- Linked List
-- HashMap
+- leetcode
+- linked lists
+- hashmap
 enableToc: true
 ---
 The problem can be found [here](https://leetcode.com/problems/lru-cache/)
