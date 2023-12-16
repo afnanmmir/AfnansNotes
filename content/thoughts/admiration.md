@@ -1,7 +1,7 @@
 ---
 title: "Admiring People" 
 date: 2023-08-16
-lastmod: 2023-08-16
+lastmod: 2023-12-16
 tags:
 - thoughts
 - personal
@@ -31,3 +31,8 @@ For me, I have always had trouble genuinely celebrating the success of others, e
 Dongji is a good friend of mine that I've known since elementary school, so we've known each other for a long time. Since I have known him for so long, the thing I admire the most about him is seeing how much he has grown as a person and adapted to situations, especially since high school. Ever since COVID happened, I feel like Dongji has just become much more comfortable and confident in who he is, but at the same time, he has been able to be humble enough to improve himself and become a better person. Just as an example, I think he has become much more mature as time has went on, but at the same time, he has kept his sense of humor that I think makes him special. This balance I believe is very hard to achieve, but I think Dongji has done a better job at it than anyone I know.
 
 Personally, I feel like I need to improve in both of these aspects. I feel that at times I am not super confident in who I am, but I am also not willing to change and improve myself. I would like to learn from Dongji and be able to find this balance so I can be more confident and gradually improve myself as a person.
+
+## Phillip Compton
+Phillip is a friend of mine I met at UT. We met through a mutual friend, but have mostly seen each other at Gregory Gym playing basketball. I usually play basketball with him every Friday. First of all, he is very good at basketball, and I admire his skill and his work ethic with basketball.
+
+I notice that the way he plays basketball reflects his character and personality. Whenever I play him one-on-one, I see how good he is as an individual player, but when we play five-on-five, he does not always look to score or to show off his skill. He always is looking to to whatever the team needs. Similarly, in life, he is always looking out for those around him and is always willing to help out those around him. He is also one of those people I talked about that seems to have the purest intentions and pure heart, and I admire that about him.

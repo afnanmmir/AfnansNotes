@@ -25,7 +25,7 @@ Additionally, a control name was added to the name set, which is OOV (out of the
 
 ## Results
 Here, you can see the accuracy table for each model:
-![Accuracy](images/DemBias_Results.png)
+![Accuracy](/notes/images/DemBias_Results.png)
 The table shows that there is clearly a significant difference in performance for most models in the ability to detect names as people. Almost every model performs best on caucasian names, and performs worse in minority ethnicities. Of all the models, ELMo has the least variation in accuracy, and this could possibly be due to the fact that it makes use of character embeddings. Note: no transformer model was used.
 
 ## Implications
