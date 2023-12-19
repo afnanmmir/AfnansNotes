@@ -63,4 +63,4 @@ class Solution:
         # print(dp)
         return dp[-1]
 ```
-This solution runs in `O(n)` time, as we have an `n` length array to track the subproblems, and each subproblem takes a cosntant amount of time to solve.
+This solution runs in `O(n)` time, as we have an `n` length array to track the subproblems, and each subproblem takes a constant amount of time to solve.

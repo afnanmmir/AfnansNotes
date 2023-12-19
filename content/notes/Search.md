@@ -37,7 +37,7 @@ One main thing is that current search engines are dominated by ads, as companies
 
 [This](https://twitter.com/marcinignac/status/1400806180797231104?ref_src=twsrc%5Etfw%7Ctwcamp%5Etweetembed%7Ctwterm%5E1400806180797231104%7Ctwgr%5Ee613450bba35b3aa27932d794a9b626bb51bf7ae%7Ctwcon%5Es1_c10&ref_url=https%3A%2F%2Fwww.apoorva-srinivasan.com%2Fan-experiment-in-interfaces-to-explore-not-search%2F) Twitter thread by Marcin Ignac highlights another problem with current exploratory search. Current search engines do not necessarily _enable_ users to explore. They simply give users a list of links to click on, and the onus is on the user to explore. 
 
-A cool example I saw to combad this can be found in [this](https://www.apoorva-srinivasan.com/an-experiment-in-interfaces-to-explore-not-search/) blog post.
+A cool example I saw to combat this can be found in [this](https://www.apoorva-srinivasan.com/an-experiment-in-interfaces-to-explore-not-search/) blog post.
 
 #### Priorities for Exploratory Search
 Data neutrality is a big priority for exploratory search. Users should be able to explore without being influenced by ads or other external factors. This is why I think it is important to have a search engine that is not dominated by ads.
@@ -59,7 +59,7 @@ It would also be great web browsers allowed for more advanced known-item search 
 #### Priorities for Known-Item Search
 I believe that speed is the most important priority for known-item search. If users know exactly what they want, they want to reach it pretty much immediately. 
 
-I also think instant accessiblity is important. This means that the search engine should be accessible from anywhere with something like a keyboard shortcut. In general, I should not have to take my hands off of the keyboard to access it or to navigate it.
+I also think instant accessibility is important. This means that the search engine should be accessible from anywhere with something like a keyboard shortcut. In general, I should not have to take my hands off of the keyboard to access it or to navigate it.
 
 
 ### Question-Answering Search

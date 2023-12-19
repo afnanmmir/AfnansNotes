@@ -11,7 +11,7 @@ enableToc: true
 Before reading this, make sure to read the piece on [Gradient Descent](GradDesc.md), as this will build off of that piece.
 
 # Motivation
-From the gradient descent article, we saw that given input data $X$ and output data $Y$, we can approxiamate parameter values/matrices such as $W$ and $b$ that would best map data points in $x_i$ to their corresponding outputs $y_i$ using an iterative algorithm that would aim to minimize a loss/cost function. We would find the gradient of the cost functions with respect to our parameters (in this case $W$ and $b$), and slowly descend towards a local minimum with the following equation:
+From the gradient descent article, we saw that given input data $X$ and output data $Y$, we can approximate parameter values/matrices such as $W$ and $b$ that would best map data points in $x_i$ to their corresponding outputs $y_i$ using an iterative algorithm that would aim to minimize a loss/cost function. We would find the gradient of the cost functions with respect to our parameters (in this case $W$ and $b$), and slowly descend towards a local minimum with the following equation:
 
 $$\Theta_{new} = \Theta_{old} - \alpha\nabla(J(\Theta))$$
 
@@ -19,7 +19,7 @@ where $\alpha$ is a hyperparameter of the learning rate. Computing the gradient 
 However, consider the following picture:
 ![Neural Network](/notes/images/neuralnet.png)
 
-Here we see 4 layers: the input, 2 hidden layers, and the output layer. Each component of the input layer is sent to all 4 of the nodes in the first hidden layer, and each node in the first hidden layer is passed to each node in the second hidden layer etc. At each node, except for the input, the input data into the node is first transformed linearly, similar to $Wx + b$. However, the input is then transformed with some nonlinear function. We can see here that the amount of parameters greatly increases as our machine learning architectures become more complex. Each node in hidden layer 1 has weights associated with each input node, and each node in hidden layer 2 has weights associated with each node in hidden layer 1. Additionally, the nonlinearities adds another level of complexity. We can see that as the compelxity of the architecture increases, it becomes more and more computationally expensive to go and calculate the gradient of every single parameter of the network individually. So, how can we do this in an efficient way such that we don't lose as much time calculating all the gradients.
+Here we see 4 layers: the input, 2 hidden layers, and the output layer. Each component of the input layer is sent to all 4 of the nodes in the first hidden layer, and each node in the first hidden layer is passed to each node in the second hidden layer etc. At each node, except for the input, the input data into the node is first transformed linearly, similar to $Wx + b$. However, the input is then transformed with some nonlinear function. We can see here that the amount of parameters greatly increases as our machine learning architectures become more complex. Each node in hidden layer 1 has weights associated with each input node, and each node in hidden layer 2 has weights associated with each node in hidden layer 1. Additionally, the nonlinearities add another level of complexity. We can see that as the complexity of the architecture increases, it becomes more and more computationally expensive to go and calculate the gradient of every single parameter of the network individually. So, how can we do this in an efficient way such that we don't lose as much time calculating all the gradients.
 
 # The Chain Rule
 Before we get into the algorithm, we visit a topic from calculus that is the foundational building block of the algorithm: the chain rule. Say we have a function $f(x)$, and then a function $g(f(x))$, and we wanted to find the derivative of $g$ with respect to $x$. We would first take the derivative of $g$ with respect to $f$, and then multiply it by the derivative of $f$ with respect to $x$. In other words:
@@ -66,7 +66,7 @@ This will get us the gradient with respect to $b$. Now, let's say we want to fin
 
 $$ \frac{\partial s}{\partial b} = \frac{\partial s}{\partial h}\frac{\partial h}{\partial z}\frac{\partial z}{\partial W}$$
 
-We can see that in both calculations, we have a commonality in $\frac{\partial s}{\partial h}\frac{\partial h}{\partial z}$, so calcualating the gradient for both parameters would result in duplicate computation. The backpropagation algorithm is made to avoid making these duplicate computations. Take the equation stack from before:
+We can see that in both calculations, we have a commonality in $\frac{\partial s}{\partial h}\frac{\partial h}{\partial z}$, so calculating the gradient for both parameters would result in duplicate computation. The backpropagation algorithm is made to avoid making these duplicate computations. Take the equation stack from before:
 
 $$ s = u(h) \\ \downarrow \\ h = f(z) \\ \downarrow \\ z = Wx + b \\ \downarrow \\ x. $$
 
@@ -82,7 +82,7 @@ In theory, this is the backpropagation algorithm in its full form: we compute lo
 
 In the real world, to perform this algorithm, computation graphs are created, where source nodes are the inputs, and interior nodes are the operations:
 ![Computational Graph](/notes/images/CompGraph.png)
-This is similar to an expression tree. When determining the value of the output, this graph is evaluated identiacally to an expression tree. This differs, though, because at each node, we are able to store the local gradient at that node, which will be propagated back to all the nodes behind it, allowing us to calculate the gradients for each source node that will be used to update the parameters.
+This is similar to an expression tree. When determining the value of the output, this graph is evaluated identically to an expression tree. This differs, though, because at each node, we are able to store the local gradient at that node, which will be propagated back to all the nodes behind it, allowing us to calculate the gradients for each source node that will be used to update the parameters.
 
 # Summary and Final Thoughts
 This is the backpropagation algorithm in full. We store local error signals at each layer of the stack and pass them down the stack to allow us to compute gradients efficiently enough so we can update parameters of complex neural networks with adequate efficiency. This algorithm stands out to me so much because it requires extensive knowledge of concepts in both calculus and software engineering. In my head, the storing of local error signals reminds me of dynamic programming, similar to memoization. Additionally, creating computation graphs and expression trees is a foundational software engineering principle. The intersection of math and software engineering here makes a very elegant algorithm in my opinion.

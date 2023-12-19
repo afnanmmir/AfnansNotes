@@ -10,7 +10,7 @@ enableToc: true
 The problem can be found [here](https://leetcode.com/problems/longest-consecutive-sequence/submissions/)
 
 # The Problem
-Given an array of numbers, return the length of the longsest consecutive numbers sequence (i.e: 1,2,3,...).
+Given an array of numbers, return the length of the longest consecutive numbers sequence (i.e: 1,2,3,...).
 
 Example:
 

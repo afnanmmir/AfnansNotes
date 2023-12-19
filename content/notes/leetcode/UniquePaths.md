@@ -10,7 +10,7 @@ tags:
 The problem can be found [here](https://leetcode.com/problems/unique-paths/)
 
 # The Problem
-There is a robot that is in an `m x n` grid. It is positioned in the top left corner `(0,0)`. Its goal is to make it to the bottom right corner `(m-1,n-1)`. For each move the robot makes, it can only move either one to the right or one down. Return the number of unique paths the robot coud take to get to its target.
+There is a robot that is in an `m x n` grid. It is positioned in the top left corner `(0,0)`. Its goal is to make it to the bottom right corner `(m-1,n-1)`. For each move the robot makes, it can only move either one to the right or one down. Return the number of unique paths the robot could take to get to its target.
 
 # The Approach
 We know that for each move, the robot can only move 1 down or 1 to the right. This means that when it reaches the bottom right corner, it must have either come from the tile above of it, or the tile to the left of it. This would tell us that the number of ways to get to the bottom right corner is equal to the sum of the number of ways to reach the tile to the left of it and the number of ways to reach the tile to the right of it. This tells us we should use dynamic programming. We are using the solutions of smaller subproblems in our problem to find the answer we are looking for. We now go through the process of finding the dynamic programming algorithm.

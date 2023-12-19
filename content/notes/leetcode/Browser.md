@@ -9,11 +9,11 @@ tags:
 The problem can be found [here](https://leetcode.com/problems/design-browser-history/)
 
 # The Problem
-You have a browswer of one tap where you start at `homepage` and can visit another `url`, get back in the history some number of `steps` or move forward in the history some number of `steps`.
+You have a browser of one tap where you start at `homepage` and can visit another `url`, get back in the history some number of `steps` or move forward in the history some number of `steps`.
 
 Implement a `BrowserHistory` class:
 - `BrowserHistory(string homepage)` initializes the object with the homepage of the browser
-- `void visit(string url)` visits `url` from the current page. The current page will be put in the backwards history. This will also clewar up the forward history.
+- `void visit(string url)` visits `url` from the current page. The current page will be put in the backwards history. This will also clear up the forward history.
 - `string back(int steps)` moves `steps` back in history. If you can only go back `x` steps such that `x < steps`, then go back `x` steps. Return the url that you end up at.
 - `string forward(int steps)` moves `steps` forward in history. If you can only go forward `x` steps such that `x < steps`, then go forward `x` steps. Return the url that you end up at.
 

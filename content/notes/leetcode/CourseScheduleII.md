@@ -16,7 +16,7 @@ There are a total of `numCourses` courses you have to take, labeled from `0` to 
 Return the ordering of the courses you should take to finish all the courses. If it is impossible to finish all courses, return an empty array. If there are multiple correct orders, return any of them.
 
 # The Approach
-This problem is almost identical to [Course Schedule](/notes/CourseSchedule.md), except that in this instance, we need to actually return the topological sort of the graph. Everytime we find the node with an in degree of 0, we add it to the topological sort list. If we cannot find a node with an in degree of 0, then we return an empty list.
+This problem is almost identical to [Course Schedule](/notes/CourseSchedule.md), except that in this instance, we need to actually return the topological sort of the graph. Every time we find the node with an in degree of 0, we add it to the topological sort list. If we cannot find a node with an in degree of 0, then we return an empty list.
 
 # Code
 ```python
