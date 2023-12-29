@@ -8,7 +8,7 @@ tags:
 - academic
 enableToc: true
 ---
-Before reading this, make sure to read the piece on [Gradient Descent](GradDesc.md), as this will build off of that piece.
+Before reading this, make sure to read the piece on [Gradient Descent](grad_desc.md), as this will build off of that piece.
 
 # Motivation
 From the gradient descent article, we saw that given input data $X$ and output data $Y$, we can approximate parameter values/matrices such as $W$ and $b$ that would best map data points in $x_i$ to their corresponding outputs $y_i$ using an iterative algorithm that would aim to minimize a loss/cost function. We would find the gradient of the cost functions with respect to our parameters (in this case $W$ and $b$), and slowly descend towards a local minimum with the following equation:
@@ -45,7 +45,7 @@ This also becomes the input of the next layer. We continuously compound more and
 This situation lends itself to the chain rule naturally, and we will be able to leverage the chain rule to more efficiently calculate the gradients.
 # The Algorithm
 To understand the algorithm, lets look at a simpler neural network:
-![Simple Neural Network](/notes/images/SimpleNeuralNet.png)
+![Simple Neural Network](/notes/images/simple_nn.png)
 Here we have the input layer, 1 hidden layer, and the output $y$. What is going to happen here? First, $x$ wil be passed into the hidden layer, and a linear transformation will be performed on it:
 
  $$z = Wx + b$$
@@ -81,7 +81,7 @@ This becomes a scalable way to compute gradients of complex neural networks. As 
 In theory, this is the backpropagation algorithm in its full form: we compute local error signals at each layer which is passed down to the lower layers to allow more efficient computation of gradients. But how is this implemented in software.
 
 In the real world, to perform this algorithm, computation graphs are created, where source nodes are the inputs, and interior nodes are the operations:
-![Computational Graph](/notes/images/CompGraph.png)
+![Computational Graph](/notes/images/comp_graph.png)
 This is similar to an expression tree. When determining the value of the output, this graph is evaluated identically to an expression tree. This differs, though, because at each node, we are able to store the local gradient at that node, which will be propagated back to all the nodes behind it, allowing us to calculate the gradients for each source node that will be used to update the parameters.
 
 # Summary and Final Thoughts

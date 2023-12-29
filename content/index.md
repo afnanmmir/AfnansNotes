@@ -7,7 +7,8 @@ I'm Afnan. This is my digital sandbox; a place for me to put notes on various to
 
 Feel free to search for a note by their titles or tags and have fun reading.
 
-This is mainly a personal space for me to put down my thoughts and notes, but if you happen to stumble upon this site, I hope you find something interesting or useful.
+Have a look at my [travel posts](travel/travel.md)
 
+This is mainly a personal space for me to put down my thoughts and notes, but if you happen to stumble upon this site, I hope you find something interesting or useful.
 
 

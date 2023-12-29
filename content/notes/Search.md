@@ -46,7 +46,7 @@ It is also important to reemphasize that in exploratory search, user's do not kn
 
 Speed is also important for exploratory search, though not as important as it is for known-item search. Users are innately impatient, so if a search engine takes too long to return results, users will likely leave the search engine. This is why it is important to have a fast search engine.
 
-I attempted to build a search engine for exploring courses at The University of Texas at Austin [here](-course-search-5e5ddpxplq-uc.a.run.app). It utilizes semantic search, and tries to provide fast results.
+I attempted to build a search engine for exploring courses at The University of Texas at Austin [here](https://ut-course-search-5e5ddpxplq-uc.a.run.app/). It utilizes semantic search, and tries to provide fast results.
 
 ### Known-Item Search
 Known-item search occurs when a user knows exactly what they are looking for and just wants the search engine to take them to the item. An example of this is performing a file-search on your computer, or searching for a tab you have open in your browser. My favorite example of this is [Raycast](https://www.raycast.com/). I also like using Chrome's tab search feature because of all the tabs I have open.

@@ -18,7 +18,7 @@ Additionally, the fact that users won't add as many other users, and only one po
 
 Lastly, and I think the most important, is the fact that it is almost impossible for the app to be taken over by corporations like Instagram, Facebook, and Snapchat are. Corporations rely on user retention, which leads them to need to put out a large volume of posts. This leads users' feeds to be flooded more by corporate and sponsored posts rather than their friends. However, because users only post once a day on BeReal, corporations would have a much harder time attempting to reach users. Additionally, an explore page on BeReal is not a feature that works. There is already a discovery page, however, it almost never gets used. This provides the most pure social media experience, where you only see posts from your friends in chronological order, without being stopped by random sponsored posts.
 
-For these reasons, BeReal provides one of the most pure social media experiences, where you are seeing exactly what you expect on your feed.
+For these reasons, BeReal provides a pure social media experiences, where you are seeing exactly what you expect on your feed.
 
 # The Cons
 While there are a great amount of pros for BeReal, there are a couple foundational aspects of the app that may lead to the demise of the app.
@@ -28,4 +28,4 @@ First, the backend software behind the app cannot handle the huge spikes in traf
 Additionally, users can start feeling fatigued simply doing the daily post. It can become monotonous to users, which will cause people to become bored of the app. Relatively soon, BeReal will need to add features to the app that will be new and exciting enough for users to stay.
 
 # Conclusion
-In conclusion, BeReal is an innovative social media app that can really change the social media landscape, however, if they do not implement new features and strengthen their software infrastructure, they could easily fumble one of the biggest bags ever.
+BeReal is an innovative social media app that can really change the social media landscape, however, if they do not implement new features and strengthen their software infrastructure, they could easily fumble one of the biggest bags ever.

@@ -27,7 +27,7 @@ return the list:
 # The Approach
 We can break this up into steps. If we notice, in order to do this, we will need to access the second half of this list in reverse order, as the relative order of the items in the second half of the original list are flipped. This means we need to reverse the second half of the linked list. In order to do this, we need to find the middle of the linked list. In order to do this we implement a slow and fast pointer method. The fast pointer will iterate through every other node until it reaches the end, and the slow pointer will through every node until the fast pointer reaches null. The slow pointer will then end up at the middle element. Once the slow pointer is at the middle element, we perform a reverse of this linked list, which should be trivial after completing the [Reverse Linked List](https://leetcode.com/problems/reverse-linked-list/) problem. We need to keep track of the head of this sub linked list. The solution can be solved like this, but we do run into one problem. If we reverse the second half of the list, the last element in the first half of the list will still be linked to the last element of the second half of the list. This can be seen in the following picture:
 
-![LinkedList](/notes/images/LinkedList.png)
+![LinkedList](/notes/images/linkedlist.png)
 
 The best way to fix this is severing the connection between the first and second half. We would do this by actually having the slow pointer go to the last element of the first half of the list, and severing the connection by setting the next node link equal to `null` (while also keeping track of the original node after, of course).
 
