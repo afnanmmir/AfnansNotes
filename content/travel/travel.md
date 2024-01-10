@@ -27,6 +27,6 @@ Trips:
 - Seattle (May 2022 - Aug 2022)
 - Seattle (May 2023 - Aug 2023)
 - Toronto (July 2018)
-- Vancouver (Aug 2022)
+- [Vancouver (Aug 2022)](travel/Vancouver.md)
 - Washington D.C (Aug 2023)
 
