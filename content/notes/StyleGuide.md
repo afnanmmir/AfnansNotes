@@ -2,6 +2,8 @@
 title: "Style Guide"
 date: 2023-12-27
 lastmod: 2023-12-27
+tags:
+- software
 enableToc: true
 ---
 Here is my style guide for writing code and working on software projects (updated as needed). It differs by language. 
@@ -102,6 +104,14 @@ result = (
     .long_function_name(param3, param4)
     .long_function_name(param5, param6)
 )
+```
+
+### Arithmetic
+- Use spaces around all operators _unless_ the arithmetic is being used to index an iterable/dictionary (don't ask me why I prefer this, I just do).
+```py
+result = 1 + 2
+array = [1, 2, 3, 4]
+result = array[1+2]
 ```
 
 ### Type Annotations
