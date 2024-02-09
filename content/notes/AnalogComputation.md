@@ -16,9 +16,13 @@ Surprisingly, bubble sort can be solved using a system of ODEs.
 
 ## ODE for swapping two elements
 The first step is to model the swapping of two elements in a list. Let's say we have two elements $X_1$ and $X_2$, and we want to order them such that $X_1 \leq X_2$. We can model the swapping of these two elements using the following ODE:
+
 $$ X_1' = -Y $$
+
 $$ X_2' = Y $$
+
 $$ Y' = (X_1 - X_2)Y $$
+
 With this system of equations, if $X_1 > X_2$, then $X_2$ will grow to the value of $X_1$ and $X_1$ will decay to the value of $X_2$ as shown:
 ![swapping](/notes/images/swap.png) 
 If $X_1 < X_2$, then the values will stay constant as shown:
