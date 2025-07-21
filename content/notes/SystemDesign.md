@@ -26,3 +26,5 @@ I plan on using this 4 step process, but I think switching 1 and 2 would be best
 4. Practice with commonly asked problems and extract patterns from each problem
 
 I will hopefully be working through these steps in the coming months. I am writing this as of July 20th, 2025. I am hoping to be proficient within the next 2-3 months.
+
+Adding system design notes
