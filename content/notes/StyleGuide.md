@@ -13,7 +13,7 @@ Here is my style guide for writing code and working on software projects (update
 - Generally follows the [Black](https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#line-length) style guide.
 - Line length is 88 characters.
 - Tab size is 4 spaces.
-- Though not standard or popular, keep parenthese for condidtions in `if` statements and `while` loops (space before parentheses).
+- Though not standard or popular, keep parentheses for condidtions in `if` statements and `while` loops (space before parentheses).
 ```py
 if (condition):
     # do something
