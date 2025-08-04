@@ -147,3 +147,155 @@ This way you can use the advantages of replication for scaling with the advantag
         - This is because the whole object would need to be put into the request body, which is bad, and it can cause unnecessary load on the server
         - To circumvent this, we use presigned urls, where a request is made to the server for an upload/download, and instead of performing the upload/download, the backend returns a presigned URL, that will give the user temporary permissions to upload/download to/from the BLOB storage directly
 
+
+## Networking
+The OSI Model is the 7 layer abstraction that describes how data is generally moved between machines over the network.
+
+The layers can be seen below:
+
+![OSI Model](/notes/images/OSI_Model.png)
+
+Each layer builds on the layer below it. For example, the Transport layer depends on the Network layer to be able to perform the routing of the data, and the Application layer depends on the Transport layer to have established a connection to send data over.
+
+The main three that are important for system design are Network, Transport, and Application. Example of flow of communication can be seen below:
+
+![OSI Flow](/notes/images/http_request.png)
+
+In the above image, you can see a three way handshake is first established to establish a connection. Then the request is sent and response is returned. Then the connection is terminated.
+
+Each step has its own bit of latency.
+
+### Network Layer
+This is where the **Internet Protocol (IP)** lies.
+
+- IP provides machines with addresses that allows packets of information to be routed to each other. Like addresses of homes, and USPS needs them to be able to route packages to their destination.
+
+#### Public Address vs Private Address
+- Public IP Addresses are addresses for machines that are known by all other machines in the world. This is needed for outward facing services/systems that need to accept requests/data from the public. These are usually IPv4 addresses because IPv4 was the standard initially and is supported almost universally
+
+- Private IP Addresses are addresses you assign to a machine to communicate between machines in your subnetwork. Use case might be nodes talking to each other as different microservices, or two servers needing to communicate to process a request. _Used for internal communication_.
+
+Network layer is what is needed to be able to route packets of data from one node to another.
+
+
+### Transport Layer
+
+Transport layer is needed to give context for the packets being sent node to node. It communicates the order of the packets as well as the source node of the packets to the destination node to be able to order the packets on the other side and be sure where it is coming from.
+
+There are two main protocols to know in this layer: TCP and UDP
+
+#### TCP
+- TCP is the standard default protocol to use for establishing connection and ensuring data delivery in network communication.
+- It _guarantees delivery of packets as well as the order in which the packets are delievered_.
+    - Ordering is done by giving each packet of data a sequence number so it can be ordered on the other side
+    - Delivery is guaranteed with many handshakes
+- All the guarantees lead to an increase in latency and decrease in potential throughput though. It is not good to use this when _latency and throughput is your main optimizing goal_
+
+#### UDP
+- UDP is used for when you need to _minimize latency and maximize throughput_.
+    - Sample use cases of this include video conferencing, streaming, etc.
+- Use when you do not care about the occasional packet loss because receving all packets of data is not vital.
+- Does not offer the same guarantees as TCP, so it can have less latency.
+
+### Application Layer
+This is where the Hyper-Text Transfer Protocal (HTTP) lives, a text formatted request and response model
+
+Request:
+```
+GET /posts/1 HTTP/1.1
+Host: host.com
+Accept: application/json
+User-Agent: Mozilla/5.0
+```
+
+The first line has the HTTP "method" (GET), the resource you are trying to access (/posts/1) and the http version (HTTP/1.1)
+
+The remaining lines are headers, which are key value pairs that you can add to the request to give additional meta data to the destination node when sending the request over.
+
+Response:
+```
+HTTP/1.1 200 OK
+Date: Sun, 03 Aug 2025 12:34:56 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 292
+{
+    "userId": 1,
+    "id": 1,
+    "body": "Stuff"
+}
+```
+The response first line contains the HTTP version again + the response code (200 OK) signaling the outcome of the request being processed.
+
+The remaining lines are again response headers, and after the headers, is the body of the response, which is the data the client requested.
+
+The `content-type` header is a special header that allows for "Content Negotiation"
+- The client tells the server what type of data it can consume/accept, and the server uses this data to determine what it can send to the client, and whether it can return the content the client can consume.
+- This ensures backwards and forward compatibility for HTTP versions.
+
+There are many models within HTTP
+
+#### REST
+- **Re**presentation **S**tate **T**ransfer
+- A way that we leverage HTTP protocol to make APIs
+- We use HTTP methods and resources and map them to programming functions/methods to decide what action needs to be taken.
+- Common HTTP Methods
+    - GET: Usually used for retrieving data
+    - POST: Usually used for inserting data
+    - PUT: Usually used for updating data
+    - DELETE: Usually used for deleting data
+- These methods paired with a resource can define exactly what you want an API to do.
+- Example:
+    ```
+    GET /user/{id} --> USER
+    ```
+    - In this example we use a `GET` HTTP method matched with the `/user/{id}` resource, which defines an API that will return the user with the id `{id}`.
+
+    - We can have PUT, and POST, and DELETE methods associated with this resource to update an existing user, add a new user, or delete an existing user respectively.
+- REST is considered the default/standard use case for API building, so unless there is some niche case, REST should be your choice of API modeling.
+
+#### GraphQL
+- GraphQL addresses some limitations of REST
+    - If you need a bunch of information retrieved to load a page of your app, most likely you will need to make a lot of REST API calls to get all the data you need (e.g. profile pic, profile information, etc.)
+    - Each one takes time and resources, leading to increase in overhead.
+- Instead of making multiple requests to APIs to get all the information, GraphQL allows client to define exactly what data it needs from the server, and the server can go fetch exactly what the client needs all in the same request from whatever data source it needs to access.
+
+- It is often used for when the requirements of your system are changing, so you don't need to constantly change multiple APIs.
+
+#### gRPC
+- **G**oogle **R**emote **P**rocedure **C**alls
+- It is seen as protobuf + services
+    - Protobuf: A way to define structures for data to be able to serialize the data into byte representation and eventually deserialize it back into original form
+    - Allows for efficient serialization into compact format
+- It is good to use if you want to communicate internally from one micro service to another.
+- It is not so good for publicly facing API endpoints because it is not natively supported in most browsers.
+
+#### Server Side Events
+- Everything before has been request + response pattern, where client sends request, server sends back response.
+- SSE used for when server needs to push data to users as it happens (e.g. notifications, messages, etc.)
+- SSE is a _unidirectional_ connection from server --> client
+- It is used to be able to stream content from server to client.
+- It is good for short lived running events (e.g. Chat apps for AI Chatbots)
+- It doesn't scale too well with large numbers of clients.
+
+#### Websockets
+- It is also a way for servers to be able to push data to clients, but it is _bidirectional_ meaning clients can send events to server as well.
+- This makes it good for any messages/chat apps
+- It is more resource intensive than SSE, needing a lot of infra set up
+- Web sockets are also _stateful_ because they are connections that must remain open until user is no longer active, as the server needs to know the metadata of the connection(s) to clients it has established at the minimum.
+
+
+### Scaling in Networking
+- How can we get our system to be able to handle traffic at a global scale
+
+#### Vertical Scaling
+- A less technically complex but less practical way to handle scaling is vertical scaling. This just means beefing up the server you already have with increase in memory, CPU, disk, etc. to be able to handle more and more requests.
+
+#### Horizontal Scaling
+- A more practical but also more technically complex way is to use horizontal scaling, which means getting more copies of servers and stuff to diffuse the traffic to multiple machines.
+
+- There are many things needed to perform horizontal scaling
+
+##### Load Balancing
+Placing a middle man between the client and the sever that takes the request from the client and routes the request appropriately to one of the servers based on current server traffic patterns (which server is the least congested with requests), server availability statuses (which servers are not crashed), etc.
+
+![Load Balancer](/notes/images/load_balancer.png)
