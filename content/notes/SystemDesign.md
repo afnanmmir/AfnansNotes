@@ -299,3 +299,77 @@ There are many models within HTTP
 Placing a middle man between the client and the sever that takes the request from the client and routes the request appropriately to one of the servers based on current server traffic patterns (which server is the least congested with requests), server availability statuses (which servers are not crashed), etc.
 
 ![Load Balancer](/notes/images/load_balancer.png)
+
+There are multiple ways the load balancer in the middle can be implemented: Client side Load Balancer, and Dedicated Load Balancer
+
+Client Side:
+- The routing is done locally from the client.
+- The client must be aware of all clients, and performs the routing of the request.
+- Because there isn't any real logic in the routing like there is for dedicated load balancers, this minimizes the latency increase of the load balancer
+- Not good for when you have a lot of clients, or if you need real time updates on server statuses.
+
+Dedicated LB:
+- An actual load balancer receives the request from the client and performs the routing.
+- LB constantly sending health checks to servers to make sure they are healthy and can receive traffic, and performs a routing algorithm to route requests to servers:
+    - Round Robin
+    - Random
+    - Least Connections
+-  There are also different levels the LB can live on: the network layer LB, and the application layer LB
+
+- Network Layer Load Balancer
+    - This sits in the network transport layer (TCP/UDP), and the routing is done based on IP addresses and ports. 
+    - It is very low level, but very lightweight because it does not have to do deep dive into the contents of packets.
+    - Cannot make decisions based on the content of the HTTP requests
+    - Is compatible with any of the API models in the application layer since it is abstracted
+- Application Layer Load Balancer
+    - Sits at application layer.
+    - Allows load balancer to make routing decisions based on body of request
+    - More complex routing logic, so slower.
+    - Because it has content available to it, it can be used for throttling and rate limiting because you have access to auth tokens
+### Deep Dives
+#### Regionalization
+- How do we deal with communication when traffic is coming from all different parts of the world? How do ensure optimal experience for users no matter where in the world they are located.
+
+- As discussed before with data, this can be done with partitioning of data and replication of data across multiple nodes across the world to ensure data is close enough to most of its users.
+
+- It is good to try to find natural partitions in data to spread data across. For example, with Uber, a user in Seattle will not need any data regarding drivers in London or Austrailia.
+
+- Colocation of Data:
+    - You want to keep your data and your server close together geographically to ensure you aren't unecessarily adding latency where you don't need to.
+    - Also can use a CDN.
+        - Cloud Distrbution Network, is like a globally distributed cache, where data can live for some time if it was recently accessed
+        - When a user wants to access the data again, it will make a request to the CDN as if it was the server first, and if the CDN does have it, it will return the data, but if it doesn't it will redirect the request back to the original server
+#### Failure/Fault Handling
+- A key to remember in all System Design interviews is that unexpected faults and failures are going to happen, so you need to be able to handle them.
+
+- How can we handle network requests that fail at network level? This is different from getting a server or client error code from the request. This is when the packets are lost in transit, the server never receives the request etc.
+
+- Timeouts
+
+    - We have to introduce timeouts to the client, so that the request the client makes eventually times out if no response is given within a certain period of time.
+
+    - Needs to be long enough to give the request the chance to be processed, but also should be short enough so we aren't unnecessarily waiting for something that won't happen.
+- Retries
+    - With timeouts, we want to give the request multiple efforts to succeed in case we failed due to a transient error.
+    - We allow client to retry some amount of time before actually erroring out.
+    - We use exponential backoff as a retry strategy, which means the interval between each retry increases after each retry.
+        - This is to not overload the server with retry requests, and because if the 2nd or 3rd retry won't work, it is likely that the error is not transient, so no point in retrying so fast.
+    - We also introduce a random +/- to the retry interval (Jitter). This ensures if requests are clustered together, their retry attemps won't also be clusterd together. More evenly distributed traffic pattern.
+#### Cascading Failures + Circuit Breakers
+Given the following design component:
+![circuit breaker](/notes/images/circuit_breaker.png)
+
+Let's say the DB is at 50% caopacity because of the snapshot it is producing. This means half the requests server B makes to DB will fail, and because of this, server B will make retries of these requests to the DB.
+
+The retries also fail, which means server A is receiving failure responses from server B for its requests, so server A will also make retries.
+
+With server B handling its own retries as well as server A's retries, it will become overloaded and may crash.
+
+An engineer may look at this and think server B is the problem, and try to restart it, but won't find the issue because it is a _cascading failure_, originating from a different component.
+
+We can introduce a **Circuit Breaker** to pause the sending of requests from server A to server B until the root cause is found.
+
+The circuit breaker will automatically pause the requests sent from A to B if the failure rate of requests breaches a certain threshold, and waits a certain period of time. Then, it checks again to see the status of server B, and once it is healthy again, it will resume requests.
+
+This will prevent us from having cascading failures, as we won't pull down the whole system, makes sure we aren't unnecessarily using up resources, and allows for failing system to recover.
+
