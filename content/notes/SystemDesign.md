@@ -283,6 +283,19 @@ There are many models within HTTP
 - It is more resource intensive than SSE, needing a lot of infra set up
 - Web sockets are also _stateful_ because they are connections that must remain open until user is no longer active, as the server needs to know the metadata of the connection(s) to clients it has established at the minimum.
 
+> [!tip]
+> **Statefulness**
+>
+> State is the concept of the server remembering things over multiple requests. If a server remembers information about a request/event after it has been done processing, it is considered **stateful**. If the service processes each request/event independent of each other, it is considered **stateless**.
+> 
+> An example of a stateless API is a simple REST API to retrieve account information.
+> 
+> An example of a stateful API is a websocket API for a chat session, where information such as `userId`, `roomId` may be stored.
+> 
+> Stateless APIs are preferred to implement because when a server doesn't need to remember information about previous requests, it is easier to scale, as requests can go to any server instance.
+> 
+> Stateful APIs are more complex to scale up because because if a server needs to know information about a user's past request, the state has to either be replicated across all server nodes, or requests from each client in a "session" must go to the same server, each of which is harder to implement.
+
 
 ### Scaling in Networking
 - How can we get our system to be able to handle traffic at a global scale
