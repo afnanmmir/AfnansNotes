@@ -283,7 +283,7 @@ There are many models within HTTP
 - It is more resource intensive than SSE, needing a lot of infra set up
 - Web sockets are also _stateful_ because they are connections that must remain open until user is no longer active, as the server needs to know the metadata of the connection(s) to clients it has established at the minimum.
 
-> [!tip]
+> [!tip]-
 > **Statefulness**
 >
 > State is the concept of the server remembering things over multiple requests. If a server remembers information about a request/event after it has been done processing, it is considered **stateful**. If the service processes each request/event independent of each other, it is considered **stateless**.
