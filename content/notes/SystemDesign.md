@@ -372,7 +372,7 @@ Dedicated LB:
 Given the following design component:
 ![circuit breaker](/notes/images/circuit_breaker.png)
 
-Let's say the DB is at 50% caopacity because of the snapshot it is producing. This means half the requests server B makes to DB will fail, and because of this, server B will make retries of these requests to the DB.
+Let's say the DB is at 50% capacity because of the snapshot it is producing. This means half the requests server B makes to DB will fail, and because of this, server B will make retries of these requests to the DB.
 
 The retries also fail, which means server A is receiving failure responses from server B for its requests, so server A will also make retries.
 
@@ -386,3 +386,234 @@ The circuit breaker will automatically pause the requests sent from A to B if th
 
 This will prevent us from having cascading failures, as we won't pull down the whole system, makes sure we aren't unnecessarily using up resources, and allows for failing system to recover.
 
+## API Design
+### What are APIs
+APIs are a mechanism that allows components of software to communicate with each other with a set of definitions and protocols.
+
+
+### Types of APIs
+#### REST
+- REST is API Protocol that is built upon standard HTTP requests and tools (e.g. PUT, POST, GET)
+- There are two main components in a REST API request: The resource and the HTTP method
+- Resource
+    - this defines the data that is being acted upon.
+    - Example: if you have a ticket booking app, one resource could be `events`. Could also be `user` or `tickets`
+    - Mainly defined by _the core entities_ of your system
+- HTTP method
+    - This defines the action that you want to take upon your resource
+    - Use `GET` to retrieve information about resource, `PUT` to update a resource `POST` to publish a new instance of a resource, etc.
+
+Together, the API request looks as follows:
+```
+GET /events/{id} <-- gets the details of an event with given ID
+GET /events/{id}/tickets <-- gets the tickets for a given event
+POST /events/{id}/bookings <-- posts a new boooking of a ticket for an event
+```
+- As you can see, resources can be nested within one another, with tickets and bookings being under events.
+
+**Inputs to REST APIs**
+- Path Parameters
+    - These exists within the URL, and define the specific resource you want to work with (e.g. `id` in `GET /events/id`)
+- Query Params
+    - Also exist in the URL, but help to filter out resources and finetune a query
+    - Example: `GET /events?city=LA&date=2025-08-11`
+- Request Body:
+    - Where the data that you want to insert lives.
+
+**Response to REST API Calls**
+- Uses standard HTTP codes for responses
+- Combines Response code with response body for the total response
+- Important Codes:
+    - 2XX - Successful request processing
+    - 3XX - Redirect response
+    - 4XX - Client error (e.g. bad request, authentication, rate limited)
+    - 5XX - Server error (i.e. exception on server side)
+
+#### GraphQL
+- GraphQL is a different type of API protocol that was meant to address shortcomings of REST APIs.
+- Main problem with REST: If you wanted to retrieve a bunch of different information from varioues resources, you would have to make an API call for each piece of information, and if you wanted to add more information to your data and be able to retrieve it, you would probably need to create a whole new API endpoint.
+- GraphQL allows client to form a request that tells the server exactly what it needs from the server -- nothing more, and nothing less.
+- Example of REST vs GraphQL:
+```
+query {
+    event(id: "123") {
+        name
+        date
+        venue {
+            name
+            address
+        }
+        tickets {
+            price
+            available
+        }
+    }
+}
+```
+v.s.
+```
+GET /events/123
+GET /events/123/tickets
+GET /venue/456
+```
+
+GraphQL formulates one query to retrieve the event details, the venue it is being hosted at, and the tickets that are available.
+
+#### Remote Procedural Calls (RPC)
+- RPC is another type of API that is mainly good for intra-service communication (i.e. when you want two of your internal services within a system to communicate with one another)
+- You have to define inputs and outputs with proto files so that they can be byte serialized
+- Makes for efficient calls and request processing.
+- It is not good to use for externally facing API endpoints because it is not widely supported by interfaces clients would use (e.g. web browsers, mobile apps, etc.)
+
+
+### Follow Up Topics
+#### Pagination
+- This is for dealing with API requests that retrieve a large amount of data or a lot of records
+- You don't want to send all records over the same network connection all at once.
+- Two types: Page base v.s. Cursor Based
+- Page Based
+    - Most common one and most likely one to use in system design
+    - You use query params to define the amount of items per page and which page you want
+    - e.g. with `GET /events?page=1&limit=25`, you get items 1-25
+- Cursor Based
+    - Use query params to tell you which item to start at and how long the page is
+    - e.g. with `GET/events?cursor=123&limit=25`, you get items 123-147
+
+#### Security Considerations
+- Authentication vs Authorization: Authentication verifies identity, by proving user is who they claim to be. Authorization verifies the permissions of the user to make sure they are allowed to perform the action they are trying to.
+- Example: For ticketmaster, authentication makes sure the request is coming from johndoe@example.com, and authorization makes sure that johndoe@example.com is allowed to cancel this booking.
+
+**Authentication Implementation**
+- API Keys
+    - These are long randomly generated keys generated acting like passwords for users that get stored on some database.
+    - Each client makes call to API with API key, and API first searches for this API key in the database to verify who the client is making the call
+    - This entry in the DB will store information about the actions this user can take, the throttling/rate limit for the user, etc.
+    - Good for service to service communication
+- JWT (JSON Web Tokens)
+    - JWT store all information about the user making the API calls, and it is also sent with all the information about the user, and their permissions, etc. in the token itself
+    - All happens once user has logged in.
+    - Good to use JWT for client to server calls because good in distributed systems
+
+**Role Based Access Control**
+- Similar to IAM roles in AWS.
+- Systems have different types of users that require different actions in the system
+- E.g. A customer on ticketing app needs to be able to buy tickets for events and stuff, but an event manager needs to be able to post events onto the app
+- Roles are assigned to users, and server will verify the user has the proper permissions to perform this action.
+
+**Rate Limiting/Throttling**
+- Prevents abuse of an API endpoint by limiting the amount of requests a user can make to the endpoint in a given time period (usually minutes or seconds)
+- No malicious attacks or accidental overuse.
+- Common strategies
+    - Per User Limits: Limits amount per authenticated user
+    - Per IP limits: Limits amount per IP address making request
+    - Endpoint Specific Limits: Limits amount for all users on specific endpoint
+- Use `429` error code. The rate limiting usually happens at API gateway level, not directly at server/API level.
+
+## Numbers to be Aware of
+### Modern Hardware Limits
+- Modern compute is really powerful
+    - e.g. there are compute servers you can use with up to 4 TB of Memory or with 512 GB of RAM and 128 vCPUs
+- This means apps that would have traditionally required distributed systems could now be handled by one server if needed
+- Also same modern increases in disk size.
+- **Note**: event with these modern advances, you need to be able to communicate to interviewer how you can effectively horizontally scale your system
+
+
+### Caching Numbers
+- In memory caching can handle up to TB's of data, and can access the data in 0-1 ms (can be sub millisecond level as well)
+- Main numbers:
+    - Latency:
+        - Reads: < 1ms
+        - Writes: 1-2 ms
+    - Throughput:
+        - Reads: > 100k requests
+        - Writes: > 100k requests
+    - Storage: ~ 1 TB
+- When to consider sharding for cache
+    - When you're exceeding storage limits, or need sustained throughput of > 100K requests or sustained < 0.5 ms latency
+
+### Database Numbers
+- Postgres and MySQL can usually handle TBs of data with millisecond response times
+- Main numbers:
+    - Storage: ~ 64 TB
+    - Latency:
+        - Reads: 1-5 ms for cached data, 5-30 ms for uncached data
+        - Writes: 5-15 ms for transaction commit latency
+    - Throughput: 
+        - Reads: 50k TPS
+        - Writes: 10-20k TPS
+- If you think you will exceed any of these numbers in your system, then you will consider sharding
+- Also consider sharding for fault tolerance/network tolerance, as well as if you need to make geographic considerations
+
+### Application Server Numbers
+- Servers have increased in performance a lot in modern times
+- Numbers to know:
+    - \# of concurrent connections: >100k 
+    - CPU cores: 8-64 cores
+    - Memory: 64-512 GB of RAm
+    - Network Speed: up to 25 Gbps
+- If you see CPU utilization/Memory utilization reaching >70-80%, or network bandwidth reaching threshold, need to shard/horizontally scale
+
+### Message Queue Numbers
+- Process millions of messages with single digit millisecond latency
+- Numbers:
+    - Throughput: up to 1MM messages per second
+    - Latency: 1-5 ms
+    - Message Size: 1K=kB - 10Mb/message
+    - Storage: 50 TB of storage
+    - Retention: Weeks - Months of data
+- If you are reaching theshold on any of these numbers, or if you need geographic redundancy, look to shard.
+
+### Common Mistakes
+- Do not be too eager to shard/horizontally scale. Don't need to overengineer the system if it is not needed
+
+## CAP Theorem
+**What is CAP Theorem?**
+- CAP Theorem is the idea that for a database, in a distributed system, you can only have two of the following properties
+    - Consistency: The idea of data being the same across all instances of the databases. All users see the same data at the same time
+    - Availability: Every request to the database will get a valid response
+    - Partition Tolerance: System works despite network failures to database.
+- You will always choose Partition Tolerance, because network failures are inevitable in distributed systems and system always needs to handle them, but you will need to choose between Consistency and Availability.
+
+**What makes availability and consistency conflicting?**
+
+![cap](/notes/images/dist_system.png)
+
+- If we have a system as above, where there are two databases that can take queries, and stay synced with each other, there are two possibilities:
+    - Consistency: after each database transaction is committed, the database sync happens right away and happens before the request is returned a response so that DB instances are always in sync. However, if one of the DB instances goes down, and the other DB is taking requests, it will have to return failure responses because it cannot replicate the data to the other DB instances, so this meanse the DB is not available.
+    - Availability: The database sync happens asynchronously at periodic times and when we process read requests, we have the possiblity of returning stale or out of date data, but each request will be given a response.
+### Use Cases
+#### Use Cases for Consistency
+- You will need consistency when it is _vital_ for all the users to see the same data at the exact same time.
+- Examples:
+    - Ticket booking app: You need to make sure every user sees the same status about certain tikcet/seat of an event because we cannot have users book the same seat/booking.
+    - Inventory System (i.e. Amazon): If there is 1 left of an item in the inventory, we have to make sure multiple users don't successfully order the last item.
+    - Financial Systems
+#### Use Cases for Availability
+- For almost ever use case, availability is more important than consistency. It is more important in most other use cases that the system is still functional and online.
+- Example:
+    - Social Media Service: It is not too important that we see the most accurate amount of likes on a post in real time. It is better to make sure there is a value there that was once accurate
+    - Streaming Service: You don't need exact accurate information about ratings, reviews, etc.
+### Implementation in System Design
+#### Implementing Consistency
+- If you have multiple instances of a DB, you need to implement distributed transactions to make sure all DBs are in sync. (e.g. 2 Phase Commit)
+- If possible, you could limit DB to one single node, but only if all data will fit in the single node (e.g. on scale of 1-64 TB)
+- Need to accept higher latency to ensure consistency
+- Example tools:
+    - Postgres/MySQL/Any other RDBMS
+    - Spanner
+#### Implementing Availability
+- You should have multiple replicas
+- Implement Change Data Capture (CDC) for eventual consistency
+- Example tools:
+    - Cassandra
+    - DDB
+### Other Topics
+- Sometimes in a system, there are different components where there are different requirements. This could make it so one component requires consistency, but other components require availability.
+    - Example: bookings for a ticketing service needs to be consistent, but other aspects like metadata about venues may not need to be consistent. Maybe better to be available.
+- Different Levels of Consistency:
+    - Strong Consistency: _All_ reads reflect the most recent writes
+    - Causal Consistency: All related events appear in right order.
+        - e.g. If a user makes a comment, and another user replies to the comment, the original comment must show up before the reply
+    - Read your writes consistency: Users own writes are always reflected in reads.
+        - e.g. If a user makes an update to their own profile, they should be able to see the update right away.
+    - Eventual Consistency: eventually, all the database instances will become in sync and have the same data
