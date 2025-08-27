@@ -653,6 +653,7 @@ Different configurations have different implications
         - This can be solved in a couple of ways
             - Add read replicas to distrbute the read requests
             - Store same data in different modifications of the same key (e.g. appending random digits/chars to the end of the key so that the hash will assign it to different slots)
+- ![cluster_redis](/notes/images/cluster_redis.png)
 ### Uses of Redis
 #### Using it as a Cache
 - **The most common use of Redis**
@@ -680,7 +681,7 @@ Different configurations have different implications
 - Example is when you have a chatroom app, and each user in a chat room is on a different server. Each server can just publish to Redis, and other servers can subscribe to the Redis instance, and retrieve the messages to allow for communication between server instances.
 - Allows for a centralized registry for messages to be routed where they need to be routed.
 
-> [!warning] -
+> [!warning]
 > Redis Pub/Sub is fast, but it is not durable. It has "only publish once" design, so if subscribers are offline when message is published, it will miss the message forever.
 > Redis Pub/Sub is not good if you want delivery guarantees, message persistence, or ability to replay missed messages. If you need these, use Kafka.
 
