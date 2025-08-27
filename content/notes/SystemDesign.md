@@ -617,3 +617,77 @@ GraphQL formulates one query to retrieve the event details, the venue it is bein
     - Read your writes consistency: Users own writes are always reflected in reads.
         - e.g. If a user makes an update to their own profile, they should be able to see the update right away.
     - Eventual Consistency: eventually, all the database instances will become in sync and have the same data
+
+# Key Components/Technologies
+## Redis
+Redis is a very versatile technology that has many different use cases. It is also quite simple to understand in its implementation.
+
+### What is Redis?
+- It is a single threaded, in memory, data structure storage server.
+- Single Threaded
+    - No multithreading is implemented, so all requests are processed one at a time per instance, making it simple to understand
+- In Memory
+    - All data exists in memory, making accessing the data very fast, but it also makes it not durable.
+- Data Structure Server
+    - Values inside redis can be data structures.
+
+### Infrastructure Configurations
+Different configurations have different implications
+
+- Single node 
+    - A single node of a redis server exists, and it will back up the data in the redis server to disk periodically, so that if the instance goes down, then it can back up properly
+
+![single_redis](/notes/images/single_redis.png)
+- Replicated Node
+    - You can add a read replica of your redis server to ensure high availability of the redis server
+
+![repl_redis](/notes/images/replicated_redis.png)
+
+- Cluster
+    - How Redis implements partitioning/sharding.
+    - The keys are hashed and can fit into a "slot"/"bucket" that it gets assigned to, and the client is aware of all instances
+    - Clients have maps on their side mapping slots to nodes so the entry can go to right node
+    - _How you structure your keys can determine how your redis system will scale_
+    - Hot Key Problem
+        - If one key is accessed a lot more than other keys, we will run into issue where one node of the redis cluster will get the bulk of all the requests.
+        - This can be solved in a couple of ways
+            - Add read replicas to distrbute the read requests
+            - Store same data in different modifications of the same key (e.g. appending random digits/chars to the end of the key so that the hash will assign it to different slots)
+### Uses of Redis
+#### Using it as a Cache
+- **The most common use of Redis**
+- Service checks the Redis cache for entries before it tries to request the database. If entry is found, it will return the entry. If it is not found, query to database is made
+- Makes frequently accessed data faster to access.
+- Only good if you can tolerate some staleness of data.
+- Need to consider expiration policy:
+    - Can have a Time-to-Live (TTL) policy, where entries in the cache will be removed after some time.
+    - Can have LRU policy. When cache becomes full, the least recently used entry will be removed.
+    - How long can you expect the data to be valid?
+    - Also, if you update data, the cache entry will be invalid, so it needs should be cleared
+#### Use Redis as a Rate Limiter
+- Use when you have an expensive service you don't want to be bombarded with requests.
+- Store a key value pair where the key can be the user key or something to keep track of who is making the request, and you can make sure they are not sending too many requests to your service.
+- Set a time to live on the key value pair, so that after a minute or so, it expires and user can make requests again.
+- It does not scale that well when you have a lot of users because of the fact that Redis is single threaded.
+
+#### Redis Stream for Queue/Async Processing
+- Redis has a mechanism called Redis streams that offers similar functionalities as a Kafka queue.
+- Items (which have their own key value pairs) can enter a Redis stream, and Redis has consumer group concept that can assign each item sequentially to a "worker", and this worker will perform the async processing.
+- Consumer groups allow for you to keep track of each item that gets processed in the Redis "queue"
+
+#### Redis for Pub/Sub
+- Redis has Pub/Sub capabilities built in that can be used for when you need servers to communicate with each other.
+- Example is when you have a chatroom app, and each user in a chat room is on a different server. Each server can just publish to Redis, and other servers can subscribe to the Redis instance, and retrieve the messages to allow for communication between server instances.
+- Allows for a centralized registry for messages to be routed where they need to be routed.
+
+> [!warning] -
+> Redis Pub/Sub is fast, but it is not durable. It has "only publish once" design, so if subscribers are offline when message is published, it will miss the message forever.
+> Redis Pub/Sub is not good if you want delivery guarantees, message persistence, or ability to replay missed messages. If you need these, use Kafka.
+
+#### Redis as a Distributed Lock
+- Used for when there is contention in an application (e.g. a booking in a ticketing app)
+- If someone is in the process of reserving a seat for an event, you can give them a lock to make sure no other user makes that booking at the same time.
+- Use Redis atomic increment with a TTL or expiration time.
+- If the atomic increment returns a value of 1, then you have acquired the lock, but if the value is > 1, then someone else has the lock and you need to wait.
+- When you are done with the lock, the key value should be deleted, so other people can acquire the lock.
+- Redis has other distributed lock algorithms with fencing tokens as well.
