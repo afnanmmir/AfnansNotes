@@ -692,3 +692,112 @@ Different configurations have different implications
 - If the atomic increment returns a value of 1, then you have acquired the lock, but if the value is > 1, then someone else has the lock and you need to wait.
 - When you are done with the lock, the key value should be deleted, so other people can acquire the lock.
 - Redis has other distributed lock algorithms with fencing tokens as well.
+
+### ElasticSearch (ES)
+ElasticSearch is a common tool used to implement distributed search engine for systems
+
+#### What is Search?
+- Search has many components to it:
+    - Criteria/Facets: The query that defines the data that you want to retrieve
+    - Sorting: Sorting the results based on specific fields
+    - Results: The retrieved data
+
+#### Basics of ElasticSearch
+- ES works with indexes and documents
+    - Documents are JSON blobs of information
+    - Indexes are collections of documents that you would like to perform search on
+    - You can define a mapping on an index, which basically defines the structure of the data you want to be retrieved when performing the search. Useful if you do not want all the data of each object when performing search
+
+- ES provides a RESTful API to allow users to interact with it and perform search, sort, insertion etc.
+- Search API
+    - You can query for data using JSON object that defines the criteria of your search with a GET request to retrieve the data.
+    - Also returns additional useful metadata of the search operation that can be useful
+- Sort API
+    - Similar to Search API where you define how you want to sort using JSON object and use GET request to retrieve the data in the order you want.
+    - Can define how to sort the data with custom scripts in ElasticSearch own scripting language
+    - You can also sort based on a relevance score that ES defines, which is computed in a similar manner that TF-IDF is computed.
+- Pagination
+    - For when your search can return too many results for one http request.
+    - Stateful vs Stateless pagination both implemented in ES
+        - Stateful means that the server keeps track of something (similar to a cursor point) to know from which item to start retrieving the next page of data
+        - Stateless means the point to start at is defined in the request query
+    - ES has Point in Time pagination, which allows you to perform pagination on a given snapshot of the data at a given time. This handles the case where indexes are being update constantly, which could cause pagination to miss some results from being shown.
+- API for putting data in
+    - You can use a POST request with the request body containing the index you want to create in your ES cluster.
+    - You can also use a POST request to define a mapping for your index. This is optional, but it makes performance better, as ES is not inferring types on the data, and all data is defined and organized correctly.
+    - You add documents to the index using simple post requests
+    - Each query and returned object has a versionId associated with it. This is to handle concurrency in ES. You add/update data with a versionId in the request as well, so that if someone else is also making an update to the same data, the two requests don't perform conflicting operations.
+
+#### How to use ElasticSearch in System Design
+- Use ES in your system design interview if you see that the system that you are designing requires a complex search functionality that could require more than a simple search query to your database can handle.
+- Do not use ES as a primary database. Main reason is it does not have the durability and availability guarantees that standard databases need in a proper system.
+    - Usually, it is connected to a primary database using some sort of message queue (e.g. Kafka), where the change data capture (CDC) of the database is sent through the queue to ES to periodically sync the ES cluster with the primary DB.
+    - This is done asynchronously, so ES cluster usually always a little behind the DB, but eventually consistent
+- Need to be able to tolerate eventual consistency to use ES.
+- Best with read heavy workloads.
+- Works best with denormalized data, where all data is flattened out.
+
+#### Deep Dive on ElasticSearch Internals
+- ElasticSearch operates as a high level orchestration layer that manages APIs, distributed systems, coordination, etc. and uses Apache Lucene as the high power low level search system
+
+- ElasticSearch operates and orchestrates using a cluster of nodes architecture, where each type of node specializes in a different functionality to orchestrate the whole system
+    - Master Node: Usually only 1 in a cluster, and this handles creating indexes, cluster level operations (e.g. adding/removing nodes), etc.
+    - Coordination Nodes: Taking requests, parses them, performs query optimization, and sends them to appropriate nodes. Because they take in all requests and route them, need heavy networking requirements
+    - Data Nodes: where all the documents and indexes are stored. Because they store all data, need a lot of them, and each one needs high I/O requirements and disk space
+    - Ingest Node: Where all the documents enter to be ingested/processed into the system and sent to Data nodes.
+    - ML Node: The node that specializes in any high Machine Learning workloads. Because it performs ML workloads, most likely needs GPU access other nodes don't need.
+- Each node has different functionalities, so each node will have different hardware requirements.
+**How is ES distributed?**
+- Each index will have sets of shards and replicas.
+    - Shards perform partition of data into different nodes to allow for increased amount of data to store and also increase throughput
+    - Replicas of shards are usually read only backups of shards to enable higher throughput for read requests mainly.
+![es_shards](/notes/images/es_shards.png)
+- Each replica of each shard has its own Lucene index stored inside of it to perform the search functionalities.
+- Each document is stored in a segment of the Lucene index. A segment is an **immutable** container of indexed data
+- Documents are first sent to segments in a Lucene index, and these segments are then flushed out to disk in a batch write operation.
+- Segments can be merged together when they become too numerous on disk.
+- Since segments are immutable, to perform updates and deletions, we perform soft deletes (i.e. marking the data for deletion) on the old data, so we do not recognize it as data anymore, and we perform an append of th enew data we want to write if we are updating.
+- Immutable property of segments makes caching and dealing with concurrency a lot easier, as you don't really have to worry about two users modifying the same data. Also, since its basically append only architecture, writes are a lot faster.
+
+**How to Make Search Fast?**
+- Lucene/ES makes use of inverted indices to make search faster.
+    - Inverted indexes takes the text in the document and uses them as keys for the index. If the document contains that word in its contents, it will add the document id to the list for the key.
+    - You can go further with the keys of the index by adding other forms of the word as keys as well (e.g. using lemmatization, synonyms, plural version, etc.)
+- Sorting is made faster by implementing a column based storage, so that you do not have to query all the data of each document to perform sorting/filtering.
+
+- Coordination Nodes also perform optimized query planning in the queries it gets so that queries can be processed in the most efficient way possible.
+
+### API Gateway
+- API gateway is a thin layer that sits between user and all the services that your system may have.
+- In a large system, you may have many services your user would have to interact with, and it is not feasible to have clients know endpoints to all services within your system and know which one to hit for each request that is made
+- API Gateway receives all the requests for you and performs the routing for client so client just interacts with the API gateway endpoint, but are able to interact with all services in your system still.
+- API gateways also perform a lot of middleware functions that need to be done to hit an API endpoint successfully. This includes:
+    - Authentication
+    - Rate limiting
+    - Input validation
+    - Logging
+    - Allowlisting/whitelisting
+    - etc.
+- API gateway can connect to other services to do this (e.g. an Auth service or redis instance for rate limiting)
+- Steps for API gateway
+    1. Request validation
+        - Make sure request sent is valid. If invalid, immediately reject
+    2. Run middleware operations
+        - e.g. Authentication, rate limiting, etc.
+    3. Route request to correct service
+        - This is done with a routing map stored on API gateway. Maps API paths to service endpoints
+    4. Service processes the request and returns back a response from the processing. Once this is done, the response may need additional transformation to be able to be processed by the client.
+    5.  After request is processed and response is returned, API gateway can optionally cache the response for faster response times on later calls to API.
+
+#### Scaling API Gateways
+- API gateways are usually stateless, so to scale them to be able to handle more requests, horizontally scaling is usually used (e.g. adding more hosts/instances)
+- Put API gateway instances behind a load balancer, or have Load Balancer as a feature in the API gateway itself.
+
+#### Examples of API Gateway
+- Managed Cloud Services: AWS API Gateway, Azure API management, etc.
+- Open source: Kong API Gateway.
+
+#### When to use API Gateway in Interview
+- Use when you have a microservice type architecture. It is not needed when you have a simple client to server architecture. May only need a load balancer
+- Do not spend to much time on the implementation of API gateway when using it. Place it down and move on.
+
