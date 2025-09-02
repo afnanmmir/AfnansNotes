@@ -801,3 +801,54 @@ ElasticSearch is a common tool used to implement distributed search engine for s
 - Use when you have a microservice type architecture. It is not needed when you have a simple client to server architecture. May only need a load balancer
 - Do not spend to much time on the implementation of API gateway when using it. Place it down and move on.
 
+### DynamoDB (DDB)
+- DDB Data Model
+    - Data is grouped into tables, which are collections of related date
+    - Items are the individual records of data. Similar to SQL rows,
+    - Attributes are the properties/fields of each item
+
+#### Properties of DDB
+- DDB is schemaless
+    - This means rows are flexible in the attributes that they have.
+    - Some rows include some fields that other rows may not have.
+    - Pros: Flexible data schema that doesn't require migrations, and you only pay for what you store, no need to pay for extra space for nulls/undefined
+    - Cons: Your data validation has to be handled by the application layer (e.g. handle missing attributes, extra attributes etc.)
+- Indexing
+    - DDB makes use of two keys: partition key, and sort key
+    - Partition key is the unique identifier that determines the physical location that the item should go to. Uses consistent hashing for this
+    - Sort key is an optional key that is used to enable range queries of data in DDB partition. Sort keys stored using B-trees to enable sorting and range queries.
+    - Primary key of DDB item is `{primary_key}:{sort_key}`
+    - Examples
+        - Chat App (Messages):
+            - Primary key may be chat id, so all data related to the same chat are in the same geographical location.
+            - Sort key can be message id, which is always monotonically increasing to serve same purpose as timestamp
+        - Social Media (Posts):
+            - User Id can be the partition key so all data related to same user is in same partition
+            - Post Id can be sort key to perform same function as timestamp.
+    - Global Secondary Indexes (GSI) and Local Secondary Indexes (LSI)
+        - For when you want to efficiently query for data with other keys other than primary and sort key.
+        - GSI acts as another primary key. You can make another field a GSI, and it will basically create a replica of the data using this key as the primary key for partitioning. You only need to project the data that you need though, to be space efficient.
+        - LSI act as another sort key, and same process occurs. You create a replica B-tree for the data with this key as the sort key, but you only project the data/fields that you need.
+#### How to use DDB
+- To perform DB queries, there are native SDKs in all programming languages that can be used to perform DDB queries.
+- DDB has the ability to perform transactions similar to MySQL as well if you want to enable strong consistency
+
+#### DDB Architecture
+- DDB Scales using consistent hashing, as explained before. This is how it is able to efficient partition data into the shard it needs to
+- Fault Tolerance
+    - By default, uses single leader replication strategy, where one DB gets written to, and all replicas get asynchronously updated to be in sync with leader.
+    - This means relies on eventual consistency
+    - You can enable strong consistency as well, but you will sacrifice availability and latency.
+- Advanced Features
+    - DynamoDB Accelerator (DDB)
+        - An implementation of an in memory cache that sits in front of the DB for more frequently accessed data.
+        - So you don't have to create a Redis instance in your server.
+    - DDB Streams
+        - Real time streaming of the Change Data Capture (CDC) of the DDB that can be sent to lambdas to be processed, or can be sent to ElasticSearch instance to sync search platform data with the DB.
+#### When to use DDB
+- You can use DDB almost every time that you can use PostgreSQL or MySQL, because it has options for Strong v.s. Eventual Consistency and Transactions vs No Transactions now.
+- You should not use it if your query patterns have many complex joins and complex sub queries, as DDB cannot handle as well as PostgreSQL.
+- Should not use if you have transactions that involve multiple tables
+- Should not use if you have complex data model you need to store.
+
+
