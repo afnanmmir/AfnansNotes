@@ -851,4 +851,331 @@ ElasticSearch is a common tool used to implement distributed search engine for s
 - Should not use if you have transactions that involve multiple tables
 - Should not use if you have complex data model you need to store.
 
+### Kafka
+- Kafka is a distributed event streaming and message broker platform that is mainly used for message queue systems or event streaming systems
+#### Motivating Example
+- Imagine you are running a website that updates clients with real time updates for games happening in the world cup. 
+- You have a producer that is publishing the events to a queue, and consumers that are taking these messages and processing them and sending them to the clients.
+- A server with a simple queue system will work for the normal World Cup scenario, but what happens if you want to scale this system to be able to track over 1000+ games at the same time and send events for all of these games.
+- Problem #1: Too many events can lead to the server with the queue running out of space
+- Solution #1: The easiest way to fix this is to horizontally scale your queue server by adding another server with another queue to be able to handle messages
+- Problem #2: When you add another queue, you run the risk of processing events in an incorrect order. 
+    - Say you have 2 queues: $q_1$ and $q_2$, and events $e_1$ and $e_2$ such that $e_1$ happens before $e_2$.
+    - $e_1$ gets sent to $q_1$ and $e_2$ gets sent to $q_2$. However, the consumer checks $q_2$ before $q_1$, so $e_2$ gets processed first.
+- Solution #2: The way to fix this is to make sure that all events that are causal go to the same queue. In the World Cup example, this means that all events of the same game will be sent to the same queue. You do this by introducing a partition key that will be hashed that will determine the queue that the event goes to.
+- Problem #3: If you are able to do all of these, there is also a chance that events from the producer are coming in faster than the consumer can handle. This can cause a backlog in the queue system
+- Solution #3: Introduce multiple consumers so that events can be processed in parallel. However, you do not want events to be processed more than once. You introduce consumer groups such that events can only be processed exactly once by a consumer group.
 
+- Topics:
+    - Topics are a concept that makes sure consumers only consumer and process messages that they need to care about. Consumers subscribe to topics, and producers publish their messages to the topic that it belongs to, and so only the consumers that are subscribed to the topic that was published to will be able to consume the message
+- All these solutions combined give you a high level overview of Kafka
+
+#### Kafka Overview
+- Terminology
+    - Brokers: The actual servers that hold Kafka queues
+    - Partitions: The queue instances themselves. Immutable, ordered sequence of messages we can only append to.
+    - Topics: Logical groupings of partitions
+    - Producers: Write/publish messages to topics
+    - Consumers: Take and process messages from partitions
+- Under the hood:
+    1. Producers will create messages/records to be published
+        - Each message has the following attributes:
+            - Key
+            - Value
+            - Headers
+            - Timestamp
+    2. Kafka assigns these messages to the appropriate topic, partition, and broker
+        - First, it checks to see if a key is present (key is optional)
+        - If key is not present, there will be random logic, or round robin logic to determine partition
+        - If key is present, then we perform hash on the key to get the partition that the message will go to.
+        - Then identify broker for that partition that message will be sent to. Controller has a mapping of partition to broker
+        - Send message to broker
+        - Broker appends message to the partition
+    3. Kafka appends message to the partition
+        - ![kafka_partition](/notes/images/kafka_partition.md)
+        - Each message is appended to the next available offset in the log file of the partition
+    4. Consumer reads the message from partition
+        - Consumer reads next message by sending the offset of the latest message that it has read. That way, kafka will know which message to send next.
+        - Consumer could crash and restart and forget what offset it has. To fix this, consumers periodically send the offset they are on to Kafka, so Kafka stores the state of the consumers in case of a restart/crash of consumer.
+- Durability and Availability:
+    - Kafka has a robust replica system that helps its durability and availability. There is one leader replica that handles reads and writes of all partitions, but there are many follower replicas that stay in sync with the leader. This is so the follower replicas are prepared to take over role as leader replica if the leader replica were to crash.
+#### When to use Kafka
+- When you need message queues:
+    - Async processing:
+        - You have a process that would take very long to be performed in a synchronous request. Example is you are uploading a video to YouTube, and the video needs to be transcoded to multiple resolutions. The transcoding process is too long to be handled in a synchronous process.
+        - Instead you publish a message to a Kafka queue and have a transcoder service that subscribes to the topic and consumes the message to transcode the message.
+        - This means the synchronous call will end after publishing the message and the video will eventually be transcoded.
+    - In order event processing
+        - Example is ticketmaster waiting queue.
+        - Imagine a very popular event with a large amount of people trying to book tickets for it. You can put people in a kafka queue and wait some amount of time before letting some batch of them in. This will decrease the load on your servers in the backend.
+    - Decoupling producers and consumers
+        - You use Kafka to decouple producers of messages/information from consumers/processors of messages/information so that you can scale each of them independently without worrying about the other.
+        - Reduce complexity
+- When you need event streaming:
+    - Event streaming is real time processing of lots of data.
+    - An example is ad clicking aggregator, where every time an ad is clicked, that event needs to be sent to some activity tracking service for ads
+    ```
+    Client --> Producer --> Kafka (Ad Click Stream) --> Consumer (Flink) --> DB (store count of number of times ad clicked)
+    ```
+    - Another example is needing to send messages to multiple consumers at the same time. Like commenting on an Instagram Live. When you make the comment, it can publish the comment to some topic that all viewers of the livestream are subscribed to so that the comment gets sent to them in seemingly real time.
+
+#### Deep Dives on Kafka
+**Scalability**
+- Constraints on Kafka:
+    - Aim for < 1 MB per message for optimal performance
+    - Each broker can store about 1 TB of data, and can handle ~10k msgs/sec
+    - Do not send full blob through the message. Just send s3 url or something similar that allows you to retrieve the data
+- How to Scale:
+    - Add more brokers, which gives you more disk space and gives more potential throughput
+    - When you do this, you need to make sure that you are choosing a good partition key that will evenly distribute your data across all brokers
+- Hot Key Problem:
+    - This happens when a single key gets accessed super often, so the partition that the key would go to gets overloaded with requests
+    - How to handle this?
+        - You can remove the key, as the key is optional. You can do this if ordering is not that important to you.
+        - Create a compound key by appending a random number to the end of the key to have it get sent to random partitions
+**Fault Tolerance/Durability**
+- As stated before, Kafka has robust replication strategy that makes sure there are follower replicas ready to take over leader replica if leader goes down.
+- Relevant Configs in Kafka for fault tolerance:
+    - Acks: The number of replicas that need to acknowledge the ingestion of a message before the message can be deemed to be sent successfully. High # of acks will mean higher chance of durability of message, but decreases performance. Opposite is true for low number of acks. Need to balance
+    - Replication factor: Number of replicas you want. Same story. Higher # --> Higher durability, slower performance.
+**Error Handling/Retries**
+- Producer retries:
+    - Similar to API retries. Just retry at a given interval until the message has been published to the partition successfully.
+- Consumer Retries:
+    - You have a main topic, a retry topic, and a DLQ topic.
+    - Main topic is for the first time the message is processed. If the first attempt fails, send the message to the retry topic to be retried in case of a transient failure.
+    - If after a certain amount of retries the message still fails, place message on DLQ topic. No consumer for this topic. Message sits here and alerts engineer that it failed, and engineer figures out why it failed.
+**Performance/Optimizations**
+- You can compress messages using some compression algorithm like GZIP to decrease the size of messages being sent and consumed. Better network and memory efficiency.
+- You can batch messages in producer to increase throughput and decrease number of requests the brokers have to handle.
+
+### PostgreSQL (PSQL)
+**The most common database to use in system design interviews.**
+#### Motivating Example (Social Media Platform)
+- In social media platform, handle the following fundamental relationships:
+    - Create posts
+    - Comment on posts
+    - Like posts and comments
+    - Direct Message
+    - Follow other users
+- Each of these requires different requirements that PSQL can handle:
+    - Atomic operations for multistep functions
+    - Some operations can be eventually consistent.
+    - Comments must have referential integrity
+    - Users should be able to search
+- PSQL good for complex relations, searching, scaling, and mixed consistency.
+
+#### Core Capabilities
+- Read performance
+    - Really good for when # of reads >> # of writes
+    - Able to use indexing to be able to perform fast retrieval.
+    - Uses B-trees for basic indexing, which is good for range and exact queries.
+    - Also has advanced indexing capabilities
+        - Inverted index that is usually used for full text search.
+        - JSONB columns can be used to add additional json like attributes that you can search for.
+        - Geospatial indexes also supported in PSQL if need to deal with geospatial data.
+    - Query Optimization Essentials
+        - Covering indexes:
+            - Instead of the indexes storing the location of where the data is for the DB to go retrieve it, the index stores the data itself so faster retrieval
+        - Partial indexes:
+            - Similar to covering indexes, but instead of storing all of the data at the index, only store specific partial data (select fields)
+    - Performance Numbers
+        - Query Performance
+            - Simple index lookups: 10k/second per node
+            - Complex joins: 1k per second per node
+        - Scale Limits
+            - Stay < 100M rows
+            - Full text search --> stay < 10M rows
+            - Complex joins --> stay < 10M rows
+- Write Performance
+    - Several optimizations made to ensure performance and durability
+        1. Changes first written to the Write Ahead Log (WAL) to ensure durability if the DB crashes
+        2. Buffer Cache Update: The buffer cache, which is where the indexes and data live in memory, are updated, and the page(s) that were modified will be marked as dirty so they will be written to disk eventually. Write to buffer memory cache needed for performance.
+        3. Memory pages asynchronously written to disk.
+        4. Indexes are updated with the new data, and the changes to the indexes need to also be written to the WAL. Because of the overhead of updating indexes, if you have a lot of indexes, youl will degrade your write performance.
+    - Because the synchronous operation of writes is just a write to memory, it is a fast operation.
+    - Write Performance Numbers
+        - Simple inserts: ~5k/node/sec
+        - Update with index modifications: 1k-2k/node/sec
+        - Complex transactions: 100/node/sec
+        - **Note**: These numbers are given with the assumption of using default read commit isolation
+    - Write Optimizations
+        - Ways to optimize writes 
+        1. Vertical Scaling
+            - Faster disk, more storage for caches, increase cores for parallelism
+        2. Batch Processing
+            - Collect multiple writes and put them all into one transaction to increase throughput
+        3. Write Offloading
+            - Send writes to kafka queue to be done asynchronously
+        4. Table Partitioning
+            - Split data across multiple instances when you have a lot of data.
+            - Also if each partition is independent, then you can have multiple writes at the same time.
+        5. Sharding
+            - Distribute writes across many PSQL instances 
+- Replication
+    - Used to scale reads in PSQL by distributing queries across multiple replicas of DB.
+    - Also provides high availability.
+    - Synchronous replication: When replication has to happen before returning the success response to client. This emphasizes consistency, but will suffer on availability.
+    - Asynchronous replication: when replication happens in background, and it is not needed to return successful response to client. This emphasizes availability over strong consistency.
+    - This form of single-leader replication is good for heavy read apps where reads >> writes.
+- High Availability
+    - With multiple replicas, if one replica goes down, other replicas can handle read requests as well.
+    - If the primary node goes down, a replica has to replace the primary node:
+        - DB Admin detects failure
+        - Replica promoted to primary
+        - Update connection info so writes go to new primary
+        - Reopen application
+- Data Consistency
+    - Postgres good if you want consistency over availability because provides ACID guarantees with transactions
+
+    - Transactions
+        - Set of operations executed by DB that either all fail or all succeed. No in between.
+        - PSQL ensures consistency for single series of operations
+        - When multiple transactions are happening at the same time, it gets more complicated trying to preserve the ACID guarantees.
+        - We can add the following:
+            1. Row level locking: Lock rows such that when a transaction acquires the lock for a row, it is the only operation that can modify or access that row.
+            2. Add stricted isolation levels (e.g. Serializable isolation)
+        - Serializability v.s. Row Locking
+            - Serializability will have a lot more overhead, especially when there are multiple shards/partitions
+            - Less scalable as well, but it is more simple to implement.
+#### When to use PSQL and When Not to
+- Postgres is the default DB choice to use in System Design interviews:
+    - Provides ACID guarantees
+    - Handles both structured and unstructured data
+    - Offers advanced indexing capabilities
+    - Offers replication
+- Good for:
+    - Data with complex relations
+    - Strong consistency guarantees
+    - Rich query capabilities
+- Examples (eCommerce, Financial Systems, Booking Systems, Social Media)
+- When to consider alternatives
+    1. You need an extreme amount of write throughput
+        - Might need to use NoSQL DB like Cassandra or DDB
+    2. Multi-region Requirements
+        - PSQL does not natively support partitioning
+        - Uses single leader replication, so cannot handle distributed transactions well
+        - Use CockroachDB for global ACID guarantees.
+        - If you want eventual consistency at global scale, use Cassandra
+    3. Simple Key Value Access Pattern
+        - If you are just doing key-value access patterns, might be overkill to use PSQL. Just use redis instance.
+#### ACID with Transactions
+- (A)tomicity
+    - All operations in Transaction will all succeed or all fail
+- (C)onsistency
+    - DB goes from a previous valid state to another valid state after a transaction
+- (I)solation
+    - PSQL has different levels of isolation it can achieve based on configuration
+- (D)urability
+    - Changes all written to WAL first, for durability.
+
+### Zookeeper
+Zookeeper is an orchestrator services used to coordinate operations in  distributed systems.
+
+Motivating example: Chat App
+ - If you have multiple servers, you would need to somehow be able to connect users who may be on different servers together. How do you make this happen?
+ - You can store the server each user is on in a DB, but if DB goes down, then your whole app goes down (single point of failure)
+ - Also what happens when one server goes down, etc. etc.
+
+ - Zookeeper intends to provide a consistent, reliable source of truth that all servers in a system can trust. (e.g. maintaining a map of users to what server they reside on)
+
+ #### Zookeeper Basics
+ **Data Model: ZNodes**
+ - Zookeeper organizes data similar to how a file system organizes data. (e.g. hierarchical with directories)
+ - Each node of data is a Znode that stores < 1 MB of data + metadata (lots of nodes, little data in each)
+ - Three types of ZNodes
+    1. Persistent ZNodes: Exist until explicitly deleted. Used to store global config data that is always needed
+    2. Ephemeral Nodes: Created to store session scoped data (e.g. who is online, what server they exist on). They get automatically deleted when the session is deleted.
+    3. Sequential ZNodes: automatically appended with monotonically increasing counter. Like an append log. Used for ordering or distributed lock
+- Chat app would use a structure similar to this
+```
+/chat-app
+  /servers           # Directory of available servers
+    /server1         # Ephemeral node containing "192.168.1.101:8080" the location of this server
+    /server2         # Ephemeral node containing "192.168.1.102:8080" the location of this server
+    /server3         # Ephemeral node containing "192.168.1.103:8080" the location of this server
+  /users             # Directory of online users
+    /alice           # Ephemeral node containing "server1" the server that alice is connected to
+    /bob             # Ephemeral node containing "server2" the server that bob is connected to
+  /config            # Application configuration
+    /max_users       # Persistent node containing "10000" the maximum number of users allowed
+    /message_rate    # Persistent node containing "100/sec" the maximum number of messages per second allowed
+```
+- This allows for us to store which server each user sits in by looking up each user node.
+
+**Server Roles and Ensemble**
+- ZK runs on ensemble of servers to prevent single point of failure.
+- Server Roles:
+    - Leader: Handles all writes and all updates. Leader is elected
+    - Follower: Serves as read replica
+- If follower fails, no big deal. If leader fails, then election process happens then re-election needs to happen
+
+**Watches: Knowing when Things Change**
+- Notification mechanism built into ZK.
+- Allow servers to be notified when some ZNode changes, eliminating Polling or other communication needs.
+- In a chat app, it helps servers know when users may connect to a different server, so the messages can still be routed properly.
+- Help servers keep local cache of ZK state.
+
+#### Key Capabilities
+**Config Management**
+- Keep dynamic configurations similar to AWS AppConfig and feature flags.
+**Service Discovery**
+- Service discovery is auto detecting endpoints and services. _Mainly multiple endpoints of same service_
+- When a service comes online, they can register themselves to ZK to become available to serve traffic. When they go down, they deregister.
+- Enables load balancing, health checking
+**Leader Election**
+- If you have a system operating as an ensemble, you can have each node be a sequential node in ZK, and when a node goes, down, you  choose the next lowest number in the sequential ZNode to become next leader. If that one fails, keep repeating down the list.
+**Distributed Locks**
+- Coordinate access to shared resources using sequential ZNodes.
+- Each client accessing the resources creates a sequential ZNode. The client with lowest number on the lock acquires the lock. When done with resource, delete the entry, and next client up has the lock.
+- Not good for if you have high frequency locks, but good for strongly consistent locks if you really needthis.
+
+#### How Zookeeper Works
+- How does ZK solve its own coordination problem? Zookeeper Atomic Broadcast (ZAB)
+- 2 Phases to this
+    - Leader election: There needs to be a leader node in ZK cluster, and this election is based on which node has most up to date transaction history
+    - Atomic Broadcast means that writes to leader node aren't successful until they have been written to a quorum of the followers (usually n//2)
+- Because writes require this overhead to be considered successful, Zookeeper is best used for read heavy use cases. This is why highly frequent lock acquiring was not a good use case for ZK.
+- ZAB guarantees the following
+    1. Sequential Consistency: updates from clients are persisted in order they are sent (serializable ?)
+    2. Atomicity: Updates either completely fail or completely succeed
+    3. Single System Image: All replicas always show same state as leader
+    4. Durability: Updates persisted and never lost/
+    5. Timeliness: View of system updated within a bounded amount of time.
+**Session and Connection Management**
+- Sessions are used to manage connections
+    1. Sessions are established when they connect to ZK.
+    2. Clients send heartbeat to ZK periodically to signal they are alive, and session stays alive.
+    3. Session can be recovered if they disconnect from one server and connect to another one quick enough.
+    4. Once sessions expire, all ephermal nodes related to that server are deleted, and all watches for it are removed.
+**Storage Architectures**
+- Stores everything in Transaction Log first (similar to WAL), so no transaction is lost.
+- Periodic snapshots of state of ZK are kept to allow for speedy recovery.
+**Handling Failures**
+- If followers, fail, continue as normal, if leader fails, need to elect a new leader.
+- If there are not enough in the quoroum, writes will fail.
+- If client to ZK fails, all ephemeral nodes related to it will be deleted when session expires (Did not receive heartbeat)
+#### Zookeeper in the Modern World
+**Current uses in Distributed Systems**
+- Not realy used in most places except in Apache ecosystems (e.g. Hadoop, HBase, etc)
+- People are transitioning away from it. Example: Kafka moved to Kafka Raft Metadata (Kraft)
+**Alternatives**
+- etcd: Ideal for config management and service discovery. Also is Cloud Native.
+- Consul: Good for network infrastructure automation with service discovery and health checking and configuring load balancing dynamically.
+- AWS AppConfig
+**Limitations**
+- Hotspotting Issues: Many clients will be watching the same ZNode, and popular nodes become bottleneck.
+- Performance Limitations: Because of its Strong Consistency guarantees, it has performance issues (slow + less available)
+- Operational Complexity, an you now need to manage the ZK Cluster.
+**When to Use Zookeeper**
+- Smart Routing
+    - Minimizing cross server communication.
+    - E.g. in chat app, map chat room to server, and have people that are in the same chat room to be in the same server, so there is less cross server communication. Do this in API gateway.
+- Infrastructure Design Problems
+    - If you are designing a distributed message queue or task scheduler in your interview, ZK is good for acting as the central brain for handling consensus and coordinating things.
+        - e.g. When a new broker comes up, registers with ZK.
+        - Electing leaders, managing subscriptions to topics.
+- Durable Distributed Locks
+    - Good for nested lock acquisition without deadlocking with the watch mechanism.
+
+### Flink
