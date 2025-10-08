@@ -1179,3 +1179,362 @@ Motivating example: Chat App
     - Good for nested lock acquisition without deadlocking with the watch mechanism.
 
 ### Flink
+Flink is a tool that helps with real time stream processing
+
+Example of this is ingesting clicks of an ad that popped up on an app.
+
+Why is stream processing complex?
+- It may require state, if you are looking for all events in the past 5 minutes
+- How can do you recover state after a crash
+- How to distribute state to a new instance if we scale up
+- What happens if events come in out of order
+
+#### Basic Concepts
+- Flink is dataflow engine based around idea of dataflow graphs
+- Dataflow graphs
+    - directed graphs describing the computation process on data.
+    - nodes are the operations, and edges are the data streams
+    - There is always a source node where the data comes from (e.g. queue), and a sink node where data ends up (e.g. DB)
+- Streams
+    - Unbounded sequences of data elements flowing through a system
+    - i.e. an infinite array of elements
+    - Example:
+    ```
+        // Example event in a stream
+        {
+        "user_id": "123",
+        "action": "click",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "page": "/products/xyz"
+        }
+    ```
+**Operators**
+- A (potentially) stateful operation that is performed on one or more input streams and produces an output stream
+- Building blocks of stream processors
+- Different operators:
+    - Map: transform each element
+    - Filter: filter out elements
+    - reduce: Combine elements
+    - Aggregate: e.g. average over a window.
+- Think of java stream code.
+
+**State**
+- Operators in Flink maintain an internal state across multiple events (e.g. to calculate a moving average over 5 mins)
+- State is managed internally by Flink to provide scaling guarantees and durability.
+- Types of state:
+    - Value state: single value per key
+    - List state: list of values per key
+    - Map state: Map of values per key
+    - Aggregation State: state for incremental aggregations
+    - Reducing state: incremental reductions
+- Example code for state:
+```java
+public class ClickCounter extends KeyedProcessFunction<String, ClickEvent, ClickCount> {
+    private ValueState<Long> countState;
+    
+    @Override
+    public void open(Configuration config) {
+        ValueStateDescriptor<Long> descriptor = 
+            new ValueStateDescriptor<>("count", Long.class);
+        countState = getRuntimeContext().getState(descriptor);
+    }
+    
+    @Override
+    public void processElement(ClickEvent event, Context ctx, Collector<ClickCount> out) 
+        throws Exception {
+        Long count = countState.value();
+        if (count == null) {
+            count = 0L;
+        }
+        count++;
+        countState.update(count);
+        out.collect(new ClickCount(event.getUserId(), count));
+    }
+}
+```
+**Watermarks**
+- How Flink handles out of order events. Events come out of order because of network delays, source system delays, etc.
+- Events all come with a timestamp that flows through the stream processor along with the data.
+- Once this timestamp flows through system, it basically declares that all events before that specific timestamp have arrived.
+- E.g. An event with time stamp 5:00:00 pm comes in at 5:01:15pm. This means that all events from 4:59:59 pm have been declared to have already arrived.
+- This allows for:
+    - Making decisions on when to compute window computations
+    - Handle late events gracefully
+    - Maintain consistent event time processing
+- Must be configured on source node of stream.
+**Windows**
+- A way to group elements in stream by time or count
+- Essential for aggregating data
+- Types of windows:
+    - Tumbling windows: fixed size, nonoverlapping
+    - Sliding: Fixed size, overlapping
+    - Session: Dynamic in size (depends on session length), nonoverlapping
+    - Global: Customized window logic
+![flink_windows](/notes/images/flink_windows.png)
+- Once window ends, data about the window is emitted.
+
+#### Basic Use of Flink
+**Defining a Job**
+- You define your source, your transformations, and your sink
+**Submitting a Job**
+```java
+StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
+// Define source (e.g., Kafka)
+DataStream<ClickEvent> clicks = env
+    .addSource(new FlinkKafkaConsumer<>("clicks", new ClickEventSchema(), properties));
+
+// Define transformations
+DataStream<WindowedClicks> windowedClicks = clicks
+    .keyBy(event -> event.getUserId())
+    .window(TumblingEventTimeWindows.of(Time.minutes(5)))
+    .aggregate(new ClickAggregator());
+
+// Define sink (e.g., Elasticsearch)
+windowedClicks
+    .addSink(new ElasticsearchSink.Builder<>(elasticsearchConfig).build());
+
+// Execute
+env.execute("Click Processing Job");
+```
+- You submit a job on the Flink cluster to execute.
+- Call `execute` method on `StreamExecutionEnvironmant` this will:
+    - Generate the JobGraph with Flink Compiler to create execution plan
+    - Submit job to JobManager that coordinates job executions
+    - Distribute Task to Task Manager
+    - Execute
+**Sample Jobs**
+- Basic Dashboarding Using Redis
+    ```java
+    DataStream<ClickEvent> clickstream = env
+    .addSource(new FlinkKafkaConsumer<>("clicks", new JSONDeserializationSchema<>(ClickEvent.class), kafkaProps));
+    
+    // Calculate metrics with 1-minute windows
+    DataStream<PageViewCount> pageViews = clickstream
+        .keyBy(click -> click.getPageId())
+        .window(TumblingProcessingTimeWindows.of(Time.minutes(1)))
+        .aggregate(new CountAggregator());
+        
+    // Write to Redis for dashboard consumption
+    pageViews.addSink(new RedisSink<>(redisConfig, new PageViewCountMapper()));
+    ```
+    - Taking clicks of an add from a kafka queue adding to tumbling window and storing count aggregator for each window to a Redis instance to create dashboard
+- Fraud Detection System
+    ```java
+    DataStream<Transaction> transactions = env
+    .addSource(new FlinkKafkaConsumer<>("transactions", 
+                new KafkaAvroDeserializationSchema<>(Transaction.class), kafkaProps))
+    .assignTimestampsAndWatermarks(
+        WatermarkStrategy.<Transaction>forBoundedOutOfOrderness(Duration.ofSeconds(10))
+            .withTimestampAssigner((event, timestamp) -> event.getTimestamp())
+    );
+    
+    // Enrich transactions with account information
+    DataStream<EnrichedTransaction> enrichedTransactions = 
+        transactions.keyBy(t -> t.getAccountId())
+                    .connect(accountInfoStream.keyBy(a -> a.getAccountId()))
+                    .process(new AccountEnrichmentFunction());
+
+    // Calculate velocity metrics (multiple transactions in short time)
+    DataStream<VelocityAlert> velocityAlerts = enrichedTransactions
+        .keyBy(t -> t.getAccountId())
+        .window(SlidingEventTimeWindows.of(Time.minutes(30), Time.minutes(5)))
+        .process(new VelocityDetector(3, 1000.0)); // Alert on 3+ transactions over $1000 in 30 min
+        
+    // Pattern detection with CEP for suspicious sequences
+    Pattern<EnrichedTransaction, ?> fraudPattern = Pattern.<EnrichedTransaction>begin("small-tx")
+        .where(tx -> tx.getAmount() < 10.0)
+        .next("large-tx")
+        .where(tx -> tx.getAmount() > 1000.0)
+        .within(Time.minutes(5));
+        
+    DataStream<PatternAlert> patternAlerts = CEP.pattern(
+        enrichedTransactions.keyBy(t -> t.getCardId()), fraudPattern)
+        .select(new PatternAlertSelector());
+        
+    // Union all alerts and deduplicate
+    DataStream<Alert> allAlerts = velocityAlerts.union(patternAlerts)
+        .keyBy(Alert::getAlertId)
+        .window(TumblingEventTimeWindows.of(Time.minutes(5)))
+        .aggregate(new AlertDeduplicator());
+        
+    // Output to Kafka and Elasticsearch
+    allAlerts.addSink(new FlinkKafkaProducer<>("alerts", new AlertSerializer(), kafkaProps));
+    allAlerts.addSink(ElasticsearchSink.builder(elasticsearchConfig).build());
+    ```
+    - Looking for specific patterns of clicks related to fraud (e.g. velocity of transactions, specific sequences)
+    - Querying using sliding windows, checking individual components of the data, and triggering alarm if a fraudulent pattern is found.
+#### How Flink Works
+- Two main types of processes in a flink cluster:
+    - Job manager: coordinator of jobs (e.g. scheduling, coodinating checkpoints, handling failures)
+    - Task Manager: Actual workers executing the data processing.
+- Job managers are leader based (i.e. there is one leader job manager with quorum based mechanism)
+    - Use ZK for electing leader
+- When submitting job:
+    1. Job manager receives application and constructs execution graph
+    2. Allocates tasks to slots in task managers
+    3. TM executte teasks
+    4. JM monitor tasks and handle failures.
+**Task Slots and Parallelism**
+- Each TM has task slots, which are basic unit of scheduling. (e.g. # of cores on machine)
+- Slots reserve capacity and resources on machine to execute tasks.
+- Isolate memory b/w tasks, control number of parallel task instances, and enable resource sharing between different task on same job.
+
+**State Management**
+- How does Flink manage state and recover from system crashes/failures gracefully?
+- State Backends
+    - There is a backend that basically manages storage and retrieval of state. 
+    - Similar to a DB that stores state
+    - Different types:
+        - Memory backend: Store on JVM heap. Allow for faster access
+        - Filesystem Backend: Store in filesystem
+        - RocksDB Backend: store in a RocksDB instance
+    - Mainly, people use memory backend because it is most performant, but if you have very large state, you may want to consider other options.
+    - Can also try storing state in a storage service provided by cloud provider (e.g. S3)
+- Checkpointing + Exactly-Once Processing
+    - Checkpointing to recover state
+    - Uses Chandrey-Lamport Algorithm for distributed snapshotting to take snapshots of state.
+    - Job manager initiates checkpoint by sending a "checkpoint barrier" event to sources. 
+    - When operator receives barrier event from all inputs, it takes snapshot of state by serializing and storing in backend.
+    - When all done, checkpoint is registered with Job Manager
+    - We can restore state with this
+    - When failure occurs:
+        1. Job manager detects failed job
+        2. Job is paused by JM. All tasks stopped
+        3. State is recovered from most recent checkpoint in backend
+        4. Tasks are redistributed from failed Task Manager to all healthy Task Managers.
+        5. Tasks restore state
+        6. Sources rewind to checkpoint positions
+        7. Resume processing
+    - Flink guarantees exactly once processing of events.
+#### In Interview
+- Some things to know
+    1. Flink is usually overkill. You could probably set up a service that transforms messages from Kafka and sends to DB.
+    2. Flink --> significant operational overhead.
+    3. State management biggest operational challenge
+    4. Window choice dramatically can change performance of Flink
+    5. Do you really need Flink?
+- For the most part, not recommended to use Flink in most systems
+
+#### Lessons From Flink
+- Borrowing several principles from Flink
+    - Separation of time domains: Event times are different from processing time
+    - Watermarks for progress tracking: Watermark useful concept for tracking progress through unordered events
+    - State management patterns: Good practices for handling state durably
+    - Resource Isolation: Slot based management
+
+### Cassandra
+- Cassandra is a NoSQL database that is good if you have large amounts of data, only need eventual consistency, and you need a high amount of write throughput.
+
+#### Cassandra Basics
+**Data Model**
+- Keyspace: 
+    - Data containers likened to databases. Contain many tables
+    - Own configuration information about tables like user defined types
+- Table:
+    - Container for data in form of rows
+- Column:
+    - Contains data belonging to rows.
+    - Columns can vary by row, meaning column of one row may not be in another row.
+    - Makes data schema able to be flexible
+**Primary Key**
+- Consists of partition key and clustering key:
+    - Clustering Key: Zero or more columns used to determine sorted order of rows
+    - Partition Key: One or more columns used to determine the partition the row resides in.
+- Is unique
+#### Key Concepts
+**Partitioning**
+- Achieve horizontal scalability by partitioning data across nodes with consistent hashing.
+- How to handle hot node problem?
+    - Cassandra has concept of virtual nodes and physical nodes. 
+    - multiple vnodes can be mapped to one physical node
+    - Distributes load evenly across nodes
+**Replication**
+- Data can be replicated to other nodes to increase availability
+- Done by going clockwise along the consistent hash ring
+- _Must replicate to vnode that does not exist on same physical node as origin_
+**Consistency**
+- Does not support ACID guarantees, but supports BASE
+- Only has atomic and isolated writes
+- Uses quorum to determine how many nodes are required for a success.
+**Query Routing**
+- Every node in Cassandra cluster can take requests, because all nodes can act as a coordinator node to direct request to the node it needs to go to.
+- All nodes know about each other statuses and can tell if they're alive with "gossiping"
+**Storage Model**
+- Uses Log Structured Merge for writes, which is basically append only log for all updates made to the DB to increase speed.
+- This increases write throughput greatly.
+- 3 core constructs of LSM:
+    - Commit log - write ahead log for durability
+    - Memtable - Map living in memory that maps each row to their location on disk.
+    - SSTable - Sorted String Table that is flushed previous memtables
+- What does a write look like:
+    1. Write issued
+    2. Written to commit log
+    3. Written to memtable
+    4. Once memtable full, memtable flushed to disk as SSTable
+    5. Commit logs related to flushed memtable deleted because now data is durable.
+- When Reading
+    1. First read memtable to find the data by primary key.
+    2. If not in memtable, then use Bloom filter to see if it is in an SSTable. If it is, scan SSTables.
+- Compaction:
+    - merging of SSTables to get rid of deleted data and duplicate data to clean up storage
+    - SSTable indexing - Store files pointing to byte offset of SSTables to enable faster retrieval of data on disk. (E.g. Store key 12 to byte offset 984 to say data for key 12 is find at byte offset 984 on disk)
+**Gossip**
+- How Cassandra nodes communicate.
+- Every node is able to perform all operations, allowing for peer-to-peer scheme for distributing information across nodes. Universal knowledge.
+- Nodes use generation and version numbers for each node they know about to track various information about all nodes.
+- Generation - timestamp for when node was bootstrapped
+- Version - logical clock value incrementing every second. Across cluster, this creates _vector clock_
+- Nodes gossip with other nodes to determine if they are alive
+**Fault Tolerance**
+- Uses Phi Accrual Failure Detector technique to detect failures during gossip
+    - Each node makes independent decision on if node they are gossiping with is dead or alive
+- If node gossips with another node, and it does not respond, it will determine it as down.
+- When node is alive again, it can reenter cluster.
+- Use Hinted Handoffs
+    - If a node is down, and a write is supposed to go to it, coordinator will write it to another node for write to succeed, and when offline node comes online, hints get sent to the previously offline node.
+    - Not a good long term solution. Only works for short term offlines
+#### How to Use Cassandra
+**Data Modeling**
+- Have to take advantage of NoSQL structure of Cassandra by denormalizing data to be able to access data faster.
+- Cassandra not good at joins, so you should denormalize data across tables to make queries faster
+- Consider what should be:
+    - Partition Key: What data should determine partition
+    - Partition size: How big should partition be
+    - Clustering Key: What needs to be sorted
+    - Denormalization: What data should be denormalized
+- Discord Messages
+    - Discord channels are busy with messages
+    - Messages should be sorted by timestamp from most recent to least recent
+        - Use monotonically increasing timestamp to prevent conflicts.
+    - Messages from the same channel should live in the same partition, so your partition key should be `channel_id`
+    - However, this would cause hotspot issues again for popular channels
+    - Use bucket concept, where every ten days worth of data of a channel gets a new bucket id and this `bucket_id` becomes the new partition key.
+    - Key takeaway: _Because most queries are for most recent messages, wouldn't mostly have to query for more than one bucket
+    - Relative schema
+    ```sql
+    CREATE TABLE messages (
+    channel_id bigint,
+    bucket int,
+    message_id bigint,
+    author_id bigint,
+    content text,
+    PRIMARY KEY ((channel_id, bucket), message_id)
+    ) WITH CLUSTERING ORDER BY (message_id DESC);
+    ```
+    - It is clear that the way the data is queried for is driving the design
+- Ticketmaster
+    - Ticket browsing UI.
+    - The UI doesn't need to have strong consistency because it is updating all the time.
+    - Once purchase flow is triggered, than consistency is needed.
+    - Each seat is a ticket. Tickets for the same event should be in the same partition, so `event_id` should be partition key.
+    - Because each event can have > 10K Seats, this may not be enough of a partition key. You can add `section_id` as part of partition key which represents what section of the stadium seat is in.
+    ```sql
+    CREATE TABLE tickets (
+    event_id bigint,
+    section_id bigint,
+    seat_id bigint,
+    price bigint,
+    PRIMARY KEY ((event_id, section_id), seat_id)
+    );
+    ```
