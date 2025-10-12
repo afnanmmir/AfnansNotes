@@ -1506,8 +1506,8 @@ env.execute("Click Processing Job");
 - Discord Messages
     - Discord channels are busy with messages
     - Messages should be sorted by timestamp from most recent to least recent
-        - Use monotonically increasing timestamp to prevent conflicts.
-    - Messages from the same channel should live in the same partition, so your partition key should be `channel_id`
+        - Use monotonically increasing timestamp to prevent conflicts. This is `message_id`. Keeps each key unique.
+    - Messages from the same channel should live in the same partition, so your partition key should be `channel_id`. Also add `message_id` as clustering
     - However, this would cause hotspot issues again for popular channels
     - Use bucket concept, where every ten days worth of data of a channel gets a new bucket id and this `bucket_id` becomes the new partition key.
     - Key takeaway: _Because most queries are for most recent messages, wouldn't mostly have to query for more than one bucket
@@ -1527,7 +1527,7 @@ env.execute("Click Processing Job");
     - Ticket browsing UI.
     - The UI doesn't need to have strong consistency because it is updating all the time.
     - Once purchase flow is triggered, than consistency is needed.
-    - Each seat is a ticket. Tickets for the same event should be in the same partition, so `event_id` should be partition key.
+    - Each seat is a ticket. Tickets for the same event should be in the same partition, so `event_id` should be partition key. Also add `seat_id` as clustering key to guarantee uniqueness.
     - Because each event can have > 10K Seats, this may not be enough of a partition key. You can add `section_id` as part of partition key which represents what section of the stadium seat is in.
     ```sql
     CREATE TABLE tickets (
@@ -1538,3 +1538,171 @@ env.execute("Click Processing Job");
     PRIMARY KEY ((event_id, section_id), seat_id)
     );
     ```
+    - If we want to be able to query for high level stats, we can create a new table only with partition key being `event_id` to make high level queries.
+        - This is example of denormalizing.
+#### Advanced Features
+- Storage Attached Indexes (SAI)
+    - Offer global secondary indexes like DDB.
+    - Offer more flexible querying of data and avoid excess denormalizing of data.
+- Materialized Views
+    - Create new tables of aggregated metrics and stuff. Or materialize a denormalized table based on a source table
+    - Don't need to keep track of denormalized data in application layer.
+    - Search Indexing
+        - Can be wired up to ElasticSearch
+#### Cassandra in Interview
+**When to Use it**
+- When you are prioritizing availability over consistency, and you need high write throughput.
+- Also good when you have clear access patterns
+**Knowing its Limitations**
+- Not good if you need strict consistency, or if you have complex query patterns that would require many joins and stuff
+- If you need strict consistency, better off with PostgreSQL or MySQL.
+
+## Common Patterns
+### Real Time Updates
+#### The Problem
+You want to be able to send real time updates from the server to the client. E.g. Google Docs -- getting updates for the document you are collaborating on.
+
+#### The Solution
+- There are two phases to developing real time updates for clients:
+    1. How do we get updates from the server to the client
+    2. How do we get updates from the source of events to the server.
+**Phase 1**
+Client Server Connection Protocols
+- How to establish efficient communication channels between client and server such that servers can push updates to client.
+- Networking 101
+    - See above for basics in networking
+    - Main topic is layers of networking
+        1. Layer 3 - Networking Layer. Where IP lives. Routing packets from one IP to another.
+        2. Layer 4 - Transport Layer. TCP vs UDP. End to End Communication Service
+        3. Layer 7 - Application layer. HTTP/WebSocket
+    - Request Lifecylce
+        ![OSI Flow 2](/notes/images/http_request.png)
+        - Main takeaway is that there are a lot of steps for a basic request, which adds a lot of latency, which is not good for real time updates.
+        - Also, TCP connection represents state, which is not easy to maintain.
+- Simple Polling: The Baseline
+    - The simplest approach to real time updates is for client to regularly poll server for updates
+    - Very basic, but can often be all that is needed, because most applications don't actually need super real time updates.
+    ```js
+    async function poll() {
+    const response = await fetch('/api/updates');
+    const data = await response.json();
+    processData(data);
+    }
+
+    // Poll every 2 seconds
+    setInterval(poll, 2000);
+    ```
+    - Advantages:
+        - Simple to implement, stateless, no special infra
+    - Disadvantages:
+        - Higher latency than other advanced solutions, more bandwidth usage, and more resource usage in general.
+    - When to use:
+        - Only when you don't actually need real time and low latency
+- Long Polling: Easy Solution
+    - Clever hack on simple polling
+    - Server holds request open until data polled for is available (or timeout)
+    - Cuts number of requests down.
+    - Not good if you have high frequency of events
+    ```js
+    // Client-side of long polling
+    async function longPoll() {
+    while (true) {
+        try {
+        const response = await fetch('/api/updates');
+        const data = await response.json();
+        
+        // Handle data
+        processData(data);
+        } catch (error) {
+        // Handle error
+        console.error(error);
+        
+        // Add small delay before retrying on error
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+    }
+    }
+    ```
+    - Because of client callbacks, you can introduce some extra latency.
+        - For example, you poll and wait, and get event 1 and event 2 comes right after. You process event 1, and have a delay before requesting again, you wait more time for event 2 than you want to.
+    ![long polling](/notes/images/longpolling.png)
+    - Good only if you have infrequent events and a simple solution is preferred
+- Server Side Events (SSE)
+    - Client sets up a call to server with a callback to perform an action when event is received
+    - A long connection is kept to support a "stream" of data coming from server to client
+    - How it works:
+        1. Client establish connection
+        2. Server keeps it open
+        3. Server sends messages when updates happen
+        4. Client receives update.
+    - Good for a chat app, each message will be sent as a chunk to the client
+    - It works out of the box for most browsers and is good for high frequency updates, more efficient than polling, and simple to implement
+    - It only allows for server to client communication
+    - It is good to use when
+        - High frequency updates, AI Chat apps (streaming new tokens to user)
+    - Uses HTTP infrastructure.
+    - Each connection is usually 30-60 seconds, so if you need connection open for longer time, you need client to be able to re-establish connection.
+        - Use last event ID so client can tell server last event it received, and EventSource object in browser handles re-establishing of the connection.
+- WebSockets:
+    - Go to choice for bi-directional communication
+    - Hold two way connection open for very long time between client and server.
+    - Client and server can send bytes of data both ways (blobs of data)
+    - Because it is persistenct connection, need infrastructure support
+        - Usually need L4 load balancer in the middle
+        - How can we re-establish connections during deployments
+    - It is a stateful connection.
+    - It is only good for bidirectional communication. It is not good if you have a high number of clients.
+    - Powerful tool, but adds a lot of complexity need to be ready to discuss.
+- WebRTC
+    - Good for Peer to Peer connection.
+    - Based on UDP protocol, so good for Video conferencing systems
+    - Very complex, requires a lot of infra and set up.
+    - Good for when you need _really_ low latency (e.g. video conferencing, online games)
+
+Client update Flowchart:
+![flowchart](/notes/images/flowchart.png)
+
+**Phase 2**
+- This is how to get events to server from the source of the events.
+- Pulling via Polling
+    - Similar to Server to Client, the server can poll the DB, or whatever the source of the event is, and mark an update when receive data.
+    - Same pros and cons as server to client polling
+    - State is constrained to DB for updates.,
+    - High latency.
+    - Not good if you _really_ want real time updates.
+- Pushing via Consistent Hashing
+    - Users are assigned to server deterministically using consistent hashing, and you can use Zookeeper to store this mapping.
+    - Then when update source needs to send update to user, it will query Zookeeper for the server the user lives on, and send the update to that server so that the client can get the update.
+    - You use consistent hashing for assigning users to servers to minimize the number of users that need to migrate from one server to another when one node is removed or added.
+    - When adding or removing node, you need to have a transition period where the old server the user lived on and the new server they live on both receive updates just in case.
+    - Good for when you need long persistent connections (e.g. WebSocket) and your system needs to scale dynamically.
+- Pushing via Pub Sub
+    - Single service that is responsible for collecting updates from a source and sending them to the interested clients. (e.g. Redis PubSub, AWS SNS/SQS, Kafka)
+    - Servers will register clients to pub/sub server so that updates can be sent to them. No need to assign users to specific servers.
+    - Good if you have a large amount of clients and minimal latency.
+    - It becomes a single point of failure in our system. If Pub/Sub service goes down, no more updates. You can perform replication and sharding and cluster of services to add redundancy.
+#### When to Use in Interviews
+- Appear in a lot of interview problems with user interaction or live data.
+**Common Scenarios**
+- Chat applications
+    - messages must appear in real time across all participants. Good to use SSE or websocket for phase 1 and pub/sub for phase 2.
+- Live Comments
+    - Real time social interaction during live events. Millions of people commenting on an Instagram Live. Need to use Hierarchical aggregation/batching
+- Google Docs
+    - WebSockets + CRDTs
+- Live Dashboards
+    - Operational data constantly changing. Use SSE.
+- If you can get away with simple polling, use it!
+
+#### Common Deep Dives
+**How to handle connection failures and reconnection?**
+- Detecting disconnections quickly and reusming with 0 data loss.
+- Implement heartbeat mechanism to detect "Zombie" connections
+- Need to be able to track what messages a client has received, so when reconnects, server can send all events client has missed.
+    - Per user message queue, or sequence number for events
+**What happens when single user has millions of followers that need same update?**
+- Comment posted on celebrity instagram live. Need multiple layers to add hierarchical distribution. Users write to different write processors that process the write, get sent to root processor, and then gets sent to different broadcast nodes that will take a batch of users to send the notification to.
+![fanout](/notes/images/fanout.png)
+**How to maintain message ordering across multiple servers?**
+- Vector clocks or logical timestamps help establish ordering relationships between messages.
+- Each server maintain a clock, and each message gets an associated timestamp to determine correct order.
