@@ -1117,15 +1117,23 @@ Motivating example: Chat App
 - Help servers keep local cache of ZK state.
 
 #### Key Capabilities
+
 **Config Management**
+
 - Keep dynamic configurations similar to AWS AppConfig and feature flags.
+
 **Service Discovery**
+
 - Service discovery is auto detecting endpoints and services. _Mainly multiple endpoints of same service_
 - When a service comes online, they can register themselves to ZK to become available to serve traffic. When they go down, they deregister.
 - Enables load balancing, health checking
+
 **Leader Election**
+
 - If you have a system operating as an ensemble, you can have each node be a sequential node in ZK, and when a node goes, down, you  choose the next lowest number in the sequential ZNode to become next leader. If that one fails, keep repeating down the list.
+
 **Distributed Locks**
+
 - Coordinate access to shared resources using sequential ZNodes.
 - Each client accessing the resources creates a sequential ZNode. The client with lowest number on the lock acquires the lock. When done with resource, delete the entry, and next client up has the lock.
 - Not good for if you have high frequency locks, but good for strongly consistent locks if you really needthis.
@@ -1142,32 +1150,45 @@ Motivating example: Chat App
     3. Single System Image: All replicas always show same state as leader
     4. Durability: Updates persisted and never lost/
     5. Timeliness: View of system updated within a bounded amount of time.
+
 **Session and Connection Management**
+
 - Sessions are used to manage connections
     1. Sessions are established when they connect to ZK.
     2. Clients send heartbeat to ZK periodically to signal they are alive, and session stays alive.
     3. Session can be recovered if they disconnect from one server and connect to another one quick enough.
     4. Once sessions expire, all ephermal nodes related to that server are deleted, and all watches for it are removed.
+
 **Storage Architectures**
+
 - Stores everything in Transaction Log first (similar to WAL), so no transaction is lost.
 - Periodic snapshots of state of ZK are kept to allow for speedy recovery.
+
 **Handling Failures**
 - If followers, fail, continue as normal, if leader fails, need to elect a new leader.
 - If there are not enough in the quoroum, writes will fail.
 - If client to ZK fails, all ephemeral nodes related to it will be deleted when session expires (Did not receive heartbeat)
+
 #### Zookeeper in the Modern World
 **Current uses in Distributed Systems**
+
 - Not realy used in most places except in Apache ecosystems (e.g. Hadoop, HBase, etc)
 - People are transitioning away from it. Example: Kafka moved to Kafka Raft Metadata (Kraft)
+
 **Alternatives**
+
 - etcd: Ideal for config management and service discovery. Also is Cloud Native.
 - Consul: Good for network infrastructure automation with service discovery and health checking and configuring load balancing dynamically.
 - AWS AppConfig
+
 **Limitations**
+
 - Hotspotting Issues: Many clients will be watching the same ZNode, and popular nodes become bottleneck.
 - Performance Limitations: Because of its Strong Consistency guarantees, it has performance issues (slow + less available)
 - Operational Complexity, an you now need to manage the ZK Cluster.
+
 **When to Use Zookeeper**
+
 - Smart Routing
     - Minimizing cross server communication.
     - E.g. in chat app, map chat room to server, and have people that are in the same chat room to be in the same server, so there is less cross server communication. Do this in API gateway.
@@ -1209,6 +1230,7 @@ Why is stream processing complex?
         }
     ```
 **Operators**
+
 - A (potentially) stateful operation that is performed on one or more input streams and produces an output stream
 - Building blocks of stream processors
 - Different operators:
@@ -1217,6 +1239,7 @@ Why is stream processing complex?
     - reduce: Combine elements
     - Aggregate: e.g. average over a window.
 - Think of java stream code.
+
 
 **State**
 - Operators in Flink maintain an internal state across multiple events (e.g. to calculate a moving average over 5 mins)
@@ -1252,7 +1275,9 @@ public class ClickCounter extends KeyedProcessFunction<String, ClickEvent, Click
     }
 }
 ```
+
 **Watermarks**
+
 - How Flink handles out of order events. Events come out of order because of network delays, source system delays, etc.
 - Events all come with a timestamp that flows through the stream processor along with the data.
 - Once this timestamp flows through system, it basically declares that all events before that specific timestamp have arrived.
@@ -1262,7 +1287,9 @@ public class ClickCounter extends KeyedProcessFunction<String, ClickEvent, Click
     - Handle late events gracefully
     - Maintain consistent event time processing
 - Must be configured on source node of stream.
+
 **Windows**
+
 - A way to group elements in stream by time or count
 - Essential for aggregating data
 - Types of windows:
@@ -1274,8 +1301,11 @@ public class ClickCounter extends KeyedProcessFunction<String, ClickEvent, Click
 - Once window ends, data about the window is emitted.
 
 #### Basic Use of Flink
+
 **Defining a Job**
+
 - You define your source, your transformations, and your sink
+
 **Submitting a Job**
 ```java
 StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -1303,7 +1333,9 @@ env.execute("Click Processing Job");
     - Submit job to JobManager that coordinates job executions
     - Distribute Task to Task Manager
     - Execute
+
 **Sample Jobs**
+
 - Basic Dashboarding Using Redis
     ```java
     DataStream<ClickEvent> clickstream = env
@@ -1364,7 +1396,9 @@ env.execute("Click Processing Job");
     ```
     - Looking for specific patterns of clicks related to fraud (e.g. velocity of transactions, specific sequences)
     - Querying using sliding windows, checking individual components of the data, and triggering alarm if a fraudulent pattern is found.
+
 #### How Flink Works
+
 - Two main types of processes in a flink cluster:
     - Job manager: coordinator of jobs (e.g. scheduling, coodinating checkpoints, handling failures)
     - Task Manager: Actual workers executing the data processing.
@@ -1375,12 +1409,15 @@ env.execute("Click Processing Job");
     2. Allocates tasks to slots in task managers
     3. TM executte teasks
     4. JM monitor tasks and handle failures.
+
 **Task Slots and Parallelism**
+
 - Each TM has task slots, which are basic unit of scheduling. (e.g. # of cores on machine)
 - Slots reserve capacity and resources on machine to execute tasks.
 - Isolate memory b/w tasks, control number of parallel task instances, and enable resource sharing between different task on same job.
 
 **State Management**
+
 - How does Flink manage state and recover from system crashes/failures gracefully?
 - State Backends
     - There is a backend that basically manages storage and retrieval of state. 
@@ -1427,7 +1464,9 @@ env.execute("Click Processing Job");
 - Cassandra is a NoSQL database that is good if you have large amounts of data, only need eventual consistency, and you need a high amount of write throughput.
 
 #### Cassandra Basics
+
 **Data Model**
+
 - Keyspace: 
     - Data containers likened to databases. Contain many tables
     - Own configuration information about tables like user defined types
@@ -1437,30 +1476,42 @@ env.execute("Click Processing Job");
     - Contains data belonging to rows.
     - Columns can vary by row, meaning column of one row may not be in another row.
     - Makes data schema able to be flexible
+
 **Primary Key**
+
 - Consists of partition key and clustering key:
     - Clustering Key: Zero or more columns used to determine sorted order of rows
     - Partition Key: One or more columns used to determine the partition the row resides in.
 - Is unique
 #### Key Concepts
+
 **Partitioning**
+
 - Achieve horizontal scalability by partitioning data across nodes with consistent hashing.
 - How to handle hot node problem?
     - Cassandra has concept of virtual nodes and physical nodes. 
     - multiple vnodes can be mapped to one physical node
     - Distributes load evenly across nodes
+
 **Replication**
+
 - Data can be replicated to other nodes to increase availability
 - Done by going clockwise along the consistent hash ring
 - _Must replicate to vnode that does not exist on same physical node as origin_
+
 **Consistency**
+
 - Does not support ACID guarantees, but supports BASE
 - Only has atomic and isolated writes
 - Uses quorum to determine how many nodes are required for a success.
+
 **Query Routing**
+
 - Every node in Cassandra cluster can take requests, because all nodes can act as a coordinator node to direct request to the node it needs to go to.
 - All nodes know about each other statuses and can tell if they're alive with "gossiping"
+
 **Storage Model**
+
 - Uses Log Structured Merge for writes, which is basically append only log for all updates made to the DB to increase speed.
 - This increases write throughput greatly.
 - 3 core constructs of LSM:
@@ -1479,14 +1530,18 @@ env.execute("Click Processing Job");
 - Compaction:
     - merging of SSTables to get rid of deleted data and duplicate data to clean up storage
     - SSTable indexing - Store files pointing to byte offset of SSTables to enable faster retrieval of data on disk. (E.g. Store key 12 to byte offset 984 to say data for key 12 is find at byte offset 984 on disk)
+
 **Gossip**
+
 - How Cassandra nodes communicate.
 - Every node is able to perform all operations, allowing for peer-to-peer scheme for distributing information across nodes. Universal knowledge.
 - Nodes use generation and version numbers for each node they know about to track various information about all nodes.
 - Generation - timestamp for when node was bootstrapped
 - Version - logical clock value incrementing every second. Across cluster, this creates _vector clock_
 - Nodes gossip with other nodes to determine if they are alive
+
 **Fault Tolerance**
+
 - Uses Phi Accrual Failure Detector technique to detect failures during gossip
     - Each node makes independent decision on if node they are gossiping with is dead or alive
 - If node gossips with another node, and it does not respond, it will determine it as down.
@@ -1495,7 +1550,9 @@ env.execute("Click Processing Job");
     - If a node is down, and a write is supposed to go to it, coordinator will write it to another node for write to succeed, and when offline node comes online, hints get sent to the previously offline node.
     - Not a good long term solution. Only works for short term offlines
 #### How to Use Cassandra
+
 **Data Modeling**
+
 - Have to take advantage of NoSQL structure of Cassandra by denormalizing data to be able to access data faster.
 - Cassandra not good at joins, so you should denormalize data across tables to make queries faster
 - Consider what should be:
@@ -1550,10 +1607,14 @@ env.execute("Click Processing Job");
     - Search Indexing
         - Can be wired up to ElasticSearch
 #### Cassandra in Interview
+
 **When to Use it**
+
 - When you are prioritizing availability over consistency, and you need high write throughput.
 - Also good when you have clear access patterns
+
 **Knowing its Limitations**
+
 - Not good if you need strict consistency, or if you have complex query patterns that would require many joins and stuff
 - If you need strict consistency, better off with PostgreSQL or MySQL.
 
@@ -1566,7 +1627,9 @@ You want to be able to send real time updates from the server to the client. E.g
 - There are two phases to developing real time updates for clients:
     1. How do we get updates from the server to the client
     2. How do we get updates from the source of events to the server.
+
 **Phase 1**
+
 Client Server Connection Protocols
 - How to establish efficient communication channels between client and server such that servers can push updates to client.
 - Networking 101
@@ -1663,6 +1726,7 @@ Client update Flowchart:
 ![flowchart](/notes/images/flowchart.png)
 
 **Phase 2**
+
 - This is how to get events to server from the source of the events.
 - Pulling via Polling
     - Similar to Server to Client, the server can poll the DB, or whatever the source of the event is, and mark an update when receive data.
@@ -1683,7 +1747,9 @@ Client update Flowchart:
     - It becomes a single point of failure in our system. If Pub/Sub service goes down, no more updates. You can perform replication and sharding and cluster of services to add redundancy.
 #### When to Use in Interviews
 - Appear in a lot of interview problems with user interaction or live data.
+
 **Common Scenarios**
+
 - Chat applications
     - messages must appear in real time across all participants. Good to use SSE or websocket for phase 1 and pub/sub for phase 2.
 - Live Comments
@@ -1695,7 +1761,9 @@ Client update Flowchart:
 - If you can get away with simple polling, use it!
 
 #### Common Deep Dives
+
 **How to handle connection failures and reconnection?**
+
 - Detecting disconnections quickly and reusming with 0 data loss.
 - Implement heartbeat mechanism to detect "Zombie" connections
 - Need to be able to track what messages a client has received, so when reconnects, server can send all events client has missed.
@@ -1706,3 +1774,148 @@ Client update Flowchart:
 **How to maintain message ordering across multiple servers?**
 - Vector clocks or logical timestamps help establish ordering relationships between messages.
 - Each server maintain a clock, and each message gets an associated timestamp to determine correct order.
+
+### Dealing With Contention
+- Contention happens when multple processes try to compete for the same resource(s)
+    - E.g. Booking the last ticket for an event, bidding on an auction item.
+
+#### Problem
+- Consider following situation buying the last ticket of an event
+    1. Alice sees 1 seat available
+    2. Bob sees 1 seat available
+    3. Alice proceeds to payment
+    4. Bob proceeeds to payment
+    5. Alice charged, seat count goes to 0.
+    6. Bob also charged, seat count goes to -1.
+    - Seat is double booked
+- Example problems this shows up in
+    - Ticketmaster
+    - Online Auction
+    - Rate limiter
+#### The Solution
+
+**Single Node Solutions**
+
+- If all data exists in single DB node, more straightforward solution
+- Atomicity
+    - Means a group of operations either all fails or all succeeds. No partial completion.
+    - Using a DB that supports atomicity using transactions usually can solve most contention problems
+    - For concert ticket situation, atomicity ensures that all related operations happen together
+    ```sql
+    BEGIN TRANSACTION;
+
+    -- Check and reserve the seat
+    UPDATE concerts 
+    SET available_seats = available_seats - 1
+    WHERE concert_id = 'weeknd_tour' 
+
+    -- Create the ticket record
+    INSERT INTO tickets (user_id, concert_id, seat_number, purchase_time)
+    VALUES ('user123', 'weeknd_tour', 'A15', NOW());
+
+    COMMIT;
+    ```
+    - However, still, a seat can be double booked, because transactions provide atomicity within themselves, and does not prevent other transactions from reading the same data concurrently. Would need serializability for that.
+    - Need coordination mechanism for this
+- Pessimistic Locking
+    - Prevent conflicts by acquiring locks upfront for row of data so only one transaction at a time can access it.
+    - Pessimistic because we are assuming conflicts will happen, and we are preventing them.
+    - This can decrease performance because less concurrency in the system
+- Isolation Levels
+    - This will control how much concurrent transactions can see each other's changes 
+    - 4 Levels
+        1. Read Uncommitted: All transactions can see each others uncommitted changes. Least isolated
+        2. Read committed: Transactions can only see changes that have been committed.
+        3. Repeatable Read: Same data read multiple times within a transaction stay consistent. Basically taking a snapshot before the transaction
+        4. Serializable: Transactions appear as though they are happening sequentially
+    - 4 is the only one that will prevent double booking, but it heavily decreases performance
+
+- Optimistic Concurrency Control
+    - This is optimistic because we are assuming conflicts won't happen, so we will only resolve them when they happen
+    - This increases performance and decreases the overhead.
+    - You can just include a version number with all data, and everytime you update data you increment the version
+    - When updating data, you specify the expected current version and the new version.
+    - With 2 contending transactions, 1 will fail because the other one will have incremented the version number
+    - OCC only makes sense when contention will probably be rare. (i.e. not good for ticketing system)
+
+**Multiple Nodes**
+
+- Handling concurrency with multiple nodes for DB is different from single node approaches.
+- Example
+    - When you have Bank Account A and B, and you want to transfer money from A to B, but A and B live on different DB nodes, the operation must be atomic across multiple nodes.
+- 2 Phase Commit
+    - Have a server act as coordinator managing the transaction and committing all changes if all changes succeed or rolling them back if one fails.
+    - Coordinator writes to persistent log before committing/aborting for recovery purposes
+    - Phase 1: Prepare
+        - All changes are done in all DB nodes except for final commit
+    - Phase 2: Commit
+        - If all changes prepared successfully, commit all changes
+        - If any failed, rollback everything.
+    - Should also include timeouts in case coordinator crashes
+- Distributed Locks
+    - Simpler mechanism with less overhead.
+    - Acquire a lock on some resource before performing the operation (e.g. for bank transfer, use account IDs)
+    - Using Redis w/ TTL
+        - Redis already has atomic operations (SET)
+        - Use SET to acquire a lock, and let the TTL handle the release and clean up of the lock when done
+        - All servers access the same redis instance.
+        - One con is Redis becomes single point of failure
+    - DB Columns
+        - Add status + expiration columns on tables to track which resources are locked.
+        - Leverage ACID properties of DB to acquire locks, and use background processes to clean up locks periodically.
+        - More complex, but no additional infra
+    - Zookeeper
+        - Use a dedicated coordintator service for strongly consistent locks
+        - Most robust, but most overhead.
+    - DL's prevent contention before it happens.
+- Saga Pattern
+    - Break all operations into sequency of independent steps that can be undone if something goes wrong.
+    - Each step has a compensation step that can reverse the step if step after fails.
+    - Like making every step into a transaction that can be rolled back.
+    - Creates an eventually consistent system, but makes it more practical to manage than 2PC.
+#### Choosing the Right Approach
+- Single DB, High Contention --> Pessimistic locking
+- Single DB, low contention --> OCC
+- Multiple DB, must be atomic --> 2PC
+- Multiple DB, user experience is important --> Distributed Locking
+#### When to Use in Interviews
+- Multiple users trying to access same limited resources
+- Prevent double booking/double charging
+- Handling Race Conditions
+- Ensure data consistency.
+#### Common Interview Scenarios
+- Online Auction System - Optimistic concurrency control to be used because multiple bidders compete for same item, and you can use the current high price as the "version"
+- Ticketmaster - Will have high contention, would want to use some application level coordination to allow reserve booking for 10 min duration (i.e. acquiring a lock for 10 mins)
+- Banking - Need it to be atomic, need to use 2PC for distributed DB or pessimistic locking or serializability.
+- Ride Sharing Dispath (Uber): App level coordination using driver status.
+- Inventory System: OCC
+
+#### When not to Overcomplicate it
+- When you have low contention scenarios with rare conflicts
+- When you have single use operations
+- Read heavy workloads --> rare write conflicts
+
+#### Common Deep Dives
+
+**How do you prevent Deadlocks with Pessmistic Locking?**
+
+- Use ordered locking which means locks must be acquired in the same order no matter what to prevent deadlock scenario
+- Add database timeout configs as a safety net in case dead lock happens
+
+**What happens when coordinator service crashes during distributed transaction?**
+
+- Use a persistent lock to be able to start up a new coordinator service and recover back to its current state and completes in flight transactions
+
+**How to handle ABA problem?**
+
+- If you have a record that changes its value from A to B then back to A between a read and write, optimistic control won't detect this.
+- You have to make sure you use a column that always is changing and probably is monotonic so it is impossible for the same value to be read again. (e.g. number of reviews.)
+
+**What about performance when everyone wants the same resource**
+- The celebrity/hot partition problem
+- Demand concentrates on a single point
+- You first try changing the problem by trying to loosen the constraints
+    - E.g. for all demand coming to one auction item, have 10 separate identical items with separate auction on each.
+    - Loosen consistency constraints that you need if you really don't need them
+- Add a message queue between worker and server to absorb the pressure and create queue-based serialization
+    - This will lead to increased latency and decreased throughput.
