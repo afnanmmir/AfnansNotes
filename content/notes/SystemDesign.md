@@ -59,6 +59,7 @@ Horizontal scaling is a little more complex. It can happen in two ways:
 Replication and Sharding. These two methods can be used together as well.
 
 **Replication**
+
 - Replication is when you distribute the same data across multiple database nodes. This is useful not when space is your bottleneck, but throughput is your bottleneck. Your system needs to be able to handle more requests per second.
 - By distributing the data across multiple nodes, you can relieve the stress on one node by giving multiple nodes to perform reads or writes on.
 - Single Leader Replication
@@ -74,12 +75,14 @@ Replication and Sharding. These two methods can be used together as well.
     - Good to use when you need to handle a large amount of reads and writes, and it is not super important for the data to be accurate and consisten right away.
 
 **Partitioning**
+
 - Good mainly for when data storage is your bottleneck (though it also does help with throughput bottleneck)
 - You have to split your data in to multiple shards because your original node simply did not have enough space.
 - It is common to assign records to partitions based on a specific attribute/key of the data (e.g. all IDs 0-1MM go to shard 0, 1MM-2MM go to shard 1, etc.)
 - You want to make sure that one DB node does not become a hotspot because of natural data distrbution. It is good to use some hashing function to make the distribution of the keys more random/uniform and use consistent hashing to have better distribution of data.
 
 **Combining both**
+
 You can combine partitioning and replication to scale your database in all directions. Say you have nodes: $n_1, n_2, n_3$, and data $X$. $X$ can be separated into $x_1, x_2, x_3$. Then each of the shards can be replicated three time such that:
 <p align="center">
 
@@ -90,7 +93,9 @@ $$ n_1: x_{11}, x_{21}, x_{31} \\ n_1: x_{12}, x_{22}, x_{32} \\ n_1: x_{13}, x_
 This way you can use the advantages of replication for scaling with the advantages of sharding for scaling.
 
 #### (Basically) All the Databases
+
 **SQL**
+
 - Relational database storing normalized data. Data is stored as rows of a table.
 - Has ACID guarantees because of transactions and 2 phase commits, and Write Ahead Logs
     - (A)tomicity: Transactions are all or nothing. If there is an error in the middle of a transaction, the whole operation is rolled back
@@ -98,11 +103,14 @@ This way you can use the advantages of replication for scaling with the advantag
     - (I)solation: No race conditions occur when transactions are concurrent with each other.
     - (D)urability: Data is not lost even when the system crashes
 - Having ACID guarantees makes SQL good for when data correctness is needed, as there is very little chance of data being corrupted, and if a transaction is failed, it will let you know, and it can be retried.
-- Having these guarantees makes SQL hard to scale horizontally with multiple nodes though because it is hard to make these guarantees in a distributed system. **SQL is hard to scale horizontally**
+- Having these guarantees makes SQL hard to scale horizontally with multiple nodes though because it is hard to make these guarantees in a distributed system. 
+
+**SQL is hard to scale horizontally**
 - Best thing you can probably do is single-leader replication.
 - It is the default option (Postgres) to go to because it is so popular, tooling is good, and it is the industry standard for DBs
 
 **MongoDB (Document)**
+
 - Document data model
     - As explained above, data is stored in hierarchical manner similar to JSON
 - Can scale better horizontally, but does not offer the same ACID guarantees as SQL (guarantees BASE)
@@ -450,7 +458,9 @@ query {
     }
 }
 ```
+
 v.s.
+
 ```
 GET /events/123
 GET /events/123/tickets
@@ -1919,3 +1929,207 @@ Client update Flowchart:
     - Loosen consistency constraints that you need if you really don't need them
 - Add a message queue between worker and server to absorb the pressure and create queue-based serialization
     - This will lead to increased latency and decreased throughput.
+
+### Data Modeling
+- Data modeling is defining how your data is structured, stored, and accessed.
+- It will be a part of defining your core entities and high level design
+- Database Model Options
+    - Relational DB (MySQL, PostgreSQL)
+        - data stored in rows in tables
+        - each table is a core entity, and you use foreign keys to perform joins
+    - Document DB (MongoDB)
+        - Data stored in JSON like objects
+        - Data is denormalized to perform complex queries
+        - Flexible data schema
+    - Key value store (DDB, Redis)
+        - Usually used for caching
+        - Fast but limited lookups
+    - Wide Column Stores (Cassandra)
+        - Column families
+        - Support high throughput on writes
+    - GraphDB
+        - data stored in nodes and edges of a graph.
+#### Schema Design
+- 3 Key factors when deciding the schema
+    1. Data volume -- how much are you going to have to store
+    2. Access Patterns -- What would you usually query by, and would you read a lot more than you write?
+    3. Consistency Requirments -- Do you need strong conssitency or can you live with eventual consistency.
+
+** Entities, Keys, Relationships**
+
+- Primary Key --> Unique identifier for each record in table
+- Foerign Key --> references to primary keys in other tables to represent relationships between entities
+- Example: Instagram
+    - Users Table
+        - user_id (pk), email, ...
+    - Posts Table
+        - post_id (pk), user_id (fk), content
+    - Comments Table
+        - comment_id (pk), user_id (fk), post_id (fk)
+
+**Normalization vs Denormalization**
+
+- Normalization means that data is stored in exactly one place in a Database
+    - This prevents inconsistent data, as when you update data, you don't have to keep track of all the places that you store the data to update it.
+- Denormalization means to deliberately duplicate data in multiple places to simplify queries, and increase performance on accessing data
+- You should want to start with data normalized, and denormalized when you need to
+
+**Indexing**
+
+- Creating data structures in a DB on specific attributes to increase performance of querying by that attributed
+- You want to index on attributes that would be most common for the application to query the data by.
+- E.g. Index instagram posts by user_id so that you can query posts made by one user.
+
+**Scaling and Sharding**
+
+- When data gets to large for 1 DB node, you need to store the data across multiple DB nodes.
+- To choose the shard that the entry should live on, you should use one column as the shard/partition key
+- You want to shard by the primary accessing key so that most queries will stay within one shard.
+- Avoid cross-shard queries by keeping all related content on the same shard
+
+### Managing Multistep Processes
+#### The Problem
+- Sometimes, in order to process a user's request, it takes coodinating between many different services
+- Example: Buying an item from E-Commerce Platform
+    - Processing the payment
+    - Reserve inventory
+    - Creating shipping label
+- Each step in this process has the chance of failing, and system needs to be able to handle that
+#### Solutions
+![single_server_orch](/notes/images/single_server_orch.png)
+- Single Server Orchestration
+    - You have one server that is performing the orchestration of everything, calling each necessary service independently
+    - This is good if you do not have any complex state management or failure handling
+    - Not good if you need to manage state, as you would be screwed if the server goes down for some reason, as managing state becomes too complex.
+![event_sourcing](/notes/images/event_sourcing.png)
+- Event Sourcing
+    - The most fundamental solution to the problem
+    - You append all events that happen to a durable log that represents what has happened, and this can be used to derive ths state of a process.
+    - You store all of these logs in the event store, and also use the event store to orchestrate the steps, initiating the next one when it is time.
+    - Whenever an event takes place, it gets written to the log, and there will be some worker node that is listening for this exact event, and when it sees it, it will be initiated to perform its job
+    - Example
+        - A payment worker sees an "OrderPlaced" message in the log, and initiates payment service to charge payment instrument
+        - Payment service writes "PaymentCharged" to log, and Inventory service sees this message and looks to reserve one of the items.
+    - It is like event driven architecture, but with API calls instead of Pub/Sub
+    - Provide the following advantages:
+        - Durable
+        - Fault tolerant
+        - Scalable
+        - Observable: Engineer can see the logs being published to it.
+    - It can be a lot of infrastructure overhead, as you will need a separate cluster to work as the event store
+- Workflows
+    - Multi-step process, at its core, is a _workflow_ that we are trying to define, which is a long running process that can handle failures and continue where they left off.
+    - There are two ways to do this, either with Worflow Systems or Durable Execution Engines
+    - They provide the benefits of event sourcing without the infrastructure overhead.
+    - Durable Execution Engine
+        - Writing long-running code that can move between machines and survive system failures and restarts
+        - You write a function that describes the workflow, and engine handles its orchestration
+        - It gets run in special workflow environment that produces deterministic results no matter what to be able to recover from failues.
+        - Workflows
+            - Define the high level flow of system
+            - Enables replay-based recovery (e.g. if an activity fails, it redoes the activity, and will reproduce the same results)
+        - Activities
+            - The individual steps of a workflow
+            - These need to be idempotent, so that when a workflow has to redo an activity for recovery purposes, it doesn't have side effects
+        - Examples of this is Temporal, which is a popular durable execution engine.
+    - Managed Workflow Systems
+        - More declarative approach to define a workflow
+        - Think Apache Airflow or AWS Step Functions
+
+#### When to use in Interviews
+- Not a popular thing in most interviews.
+- Only use as needed
+
+**Common Interview Scenarios**
+- State machine or stateful processes
+- Payment System
+    - Or systems engaging with payment systems (e.g. Uber, Amazon)
+- Human in the loop scenarios
+    - E.g. Uber, with driver having to accept or decline a ride.
+
+**When not to use**
+- Most CRUD operations will not need it
+- High frequency, low number of operation jobs
+- Simple asynchronous processing: use message queue.
+
+#### Common Deep Dives
+**How to Handle Updates to Workflows**
+
+- If you are adding or deleting a step, how do you make sure current workflow executions will be executed successfully.
+- Workflow versioning
+    - You keep old version and new version deployed at same time. All existing workflows will use old version, all incoming workflows will use new version
+- Workflow Migrations
+    - In declarative workflows, when you add the step, all workflows will take the new path
+
+**How to keep Workflow State Size in Check**
+
+- Only keep the information you really need in state.
+    - If it can be offloaded to a DB, that is an option
+
+**How to ensure Step runs exactly once**
+
+- Make sure the operation is idempotent
+
+### Handling Large BLOBs
+#### The Problem
+- How to handle trasnferring large Binary Large Object (BLOB) over the network
+- Application server can only handle a limited size for data transer.
+- You need a way to circumvent the application server and directly request to the Object Storage (e.g. S3)
+
+#### The Solution
+- You give client temporary scoped credentials that allow client to interact with the object storage, and the application server just used for authentication purposes.
+- You can do this with Presigned URLs
+- Simple Direct Upload
+    - App server receives request from client to upload object to storage.
+    - User is validated, and a temporary presigned URl is generated by server that encodes permissions for the client to upload file to location
+    - Server uses cloud provider credentials to generate URL, and it can limit the size and type of file that client can upload
+- Simple Direct Download
+    - Works basically the same way as the upload.
+    - Also can use Content Distribution Networks (CDN) to act as geographical cache to be able to increase speed of download.
+    
+- Resumable Uploads
+    - How do you handle the situation where you are 99% complete on a download, but it fails due to some server or network error.
+    - You can upload chunks of the file at a time with range headers on them, and if there is a failure, the client can receive the range header that was last completed to allow the client to resume the upload from last succeeded chunk
+    - Once all chunks are uploaded, Object storage receives a completion signal and assembles the full objects.
+- State Synchronization Challenges
+    - A common pattern is to store object metadata in DB, but it becomes hard to keep S3 and DB in sync with this data (e.g. the status of the upload.)
+        1. Race Condition: DB shows that the status is complete because all chunks uploaded, but S3 has not assembled the object completely.
+        2. Orphaned Files: Client uploads s3 object but crashes before it can update the DB, so file does not exist in DB.
+        3. Network Failures: Completion notification from S3 never reaches the servers.
+    - These are fixed by first having the s3 emit the notification, so it is the source of truth, and there is a periodic reconciliator that catches straggled files
+
+#### When to use in Interviews
+- Common Scenarios
+    - Youtube
+        - Upload videos to Youtube.
+        - Download and/or stream videos using Cloudfront sending video segments
+    - Instagram/Photo sharing
+        - Upload images directly to S3, emit notification to perform some processing
+    - Chat Apps
+        - Sending images and videos through chat. Upload to s3, and pass around a reference to the same file.
+- When not to use
+    - If you have small json files that are < 10 MB
+    - If you have synchronous validations that need to be done on the file contents, this will not work because it has to go to server
+    - If you need immediate response in UX, not good to use
+
+#### Common Deep Dives
+**How to handle "fail at 99%" situation**
+- Use the chunked data upload 
+    - Client can query qhich chunks have been uploaded, and start from first failed chunk
+    - Cloud storage keeps track of uploads with sessions, and keeps track of state to let client know what chunks have completed.
+
+**How to prevent abuse**
+
+- Do not allow users to immediately access the files they upload
+- Needs to go through quarantine and santization process before going to public bucket
+
+**How to Handle Metadata**
+
+- Use a consistent storage key that includes useful information but prevents collisions.
+
+**How to have fast downloads**
+
+- Use CDNs, so that first user to access object retrieves from object storage, after this, the content will be sent to CDN, which are distributed globally geographically so that subsequent requests for the same object is faster
+- CDN doesn't help with large file uploads, as it doesn't handle the "fail at 99%" type failures
+    - To fix this, you use range requests, which basically means adding the specified range of bytes you want of a file in the HTTP request.
+    - This enables resumable downloads
