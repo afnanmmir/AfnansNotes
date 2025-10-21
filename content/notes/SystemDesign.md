@@ -2133,3 +2133,87 @@ Client update Flowchart:
 - CDN doesn't help with large file uploads, as it doesn't handle the "fail at 99%" type failures
     - To fix this, you use range requests, which basically means adding the specified range of bytes you want of a file in the HTTP request.
     - This enables resumable downloads
+
+### Managing Long Running Jobs
+#### The Problem
+- You want to expose an API that allows users to perform some long running job (e.g. generating a PDF), but the process takes a long time (> 45 seconds)
+- This will cause the request for this to timeout if performed in a synchronous manner
+- How can we allow users to initiate these jobs without timing out issue.
+
+#### The Solution
+- Split the process into two different phases
+    1. Phase 1 is once the request is made, push the request to some request queue that feeds into the processing job/service. Server just validates and queues request
+    2. Actually executing the job. The processing service consumes from the request queue and performs the job.
+- This decouples the submission of a request from the processing of a request
+- Advantages
+    - User gets a faster response, leading to seemingly better user experience
+    - Independent scaling - you can scale webserver and worker service independently without affecting each other.
+    - fault isolation
+- Disadvantages
+    - Increase complexity and operational overhead in the service
+    - Need to keep track of the jobs' statuses.
+    - You have to live with eventual consistency.
+
+**How to Implement**
+- There are 2 tools that you need
+    1. Message queue
+    2. Pool of workers consuming from the queue
+- Message Queues
+    - Can use RabbitMQ, SQS, Redis + BullMQ, Kafka
+- Workers
+    - These are normal servers that are running the processing service (e.g. EC2/ECS, Lambda)
+- Putting it together
+    1. Web server validates a request. Create a status of pending for job
+    2. Server creates job id  and pushes the message to queue
+    3. Job ID is returned to client as response
+    4. Worker pulls from the message queue, and sets the job status as processing
+    5. Worker does processing
+    6. Worker finishes, and the results are stored somewhere (e.g. DB)
+    7. Job Status updated to completed or failed, depending on outcome
+
+#### When To Use
+- Common Signals
+    - There is mention of slow operations (e.g. video transcoding, image processing, data exports)
+    - The math does not work out
+        - When doing back of the envelope calculations, you see that service cannot scale as high as you need for the constraints with synchronous processing
+    - You have different operations in the request that would be better served on different hardware
+        - e.g. ML workloads better on GPUs.
+- Examples
+    - Youtube
+        - Video upload triggers video transcoding, generating thumbnail, and generation of closed captions
+    - Instagram
+        - When photo or video uploaded, image recognition performed and image filtering performed
+    - Uber
+        - Ride matching is asynchronous, and so is location updating to not overload server
+    - Payment Processing
+        - Actually processing a charge of a payment instrument takes a long time because of verification and fraud detection
+    - Dropbox uploading files
+        - Scanning for viruses, indexing files for better search, and sync files across multiple devices
+#### Common Deep Dives
+**How do you handle failures**
+- How can you detect when a worker crashes when processing a job?
+- Usually, implement a heartbeat mechanism between queue and workers that lets the queue know that the worker node is alive
+- If worker does not check in with queue, queue will assume it is dead and retry the job on a different node
+- Need to choose a good interval for heartbeat such that it is not constantly polling the worker but also quick enough that we aren't unnecessarily waiting.
+
+**Handling Repeat Failures**
+- If a job keeps failing, most likely it is not a host issue, but it goes down an error path in the code, so there is a bug.
+- After a certain amount of retries the event, then message should go to DLQ, and engineer should be alerted of the new DLQ message
+
+**Handling Repeat Events**
+- You may receive duplicate events because client becomes impatient and clicks "Submit" button multiple times
+- Should use idempotency keys for events so that events are idempotent and repeat processing doesn't cause side effects.
+
+**Managing Queue Backpressure**
+- What to do when you have too many messages coming into the queue
+- You can slow down the acceptance of jobs by throttling the API itself by rejecting messages being sent to queue if queue has too many messages
+- Can also implement autoscaling so you spin up new workers when too many messages
+
+**Handling Mixed Workloads**
+- You have a mix of long and short jobs, but long jobs will delay short ones from being processed
+- You can create multiple queues, each one specialize in different type of jobs, and the job can be routed to the specialty queue it needs to go to.
+- Makes sure that long jobs go to long job queue, and short jobs go to short job queue.
+
+**Orchestrating Job Dependencies**
+- You can use orchestration tools such as AWS Step Functions
+- For simple chains, you can populate the queue message of the next job with context of the previous queue/worker it came from.
