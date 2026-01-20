@@ -2217,3 +2217,79 @@ Client update Flowchart:
 **Orchestrating Job Dependencies**
 - You can use orchestration tools such as AWS Step Functions
 - For simple chains, you can populate the queue message of the next job with context of the previous queue/worker it came from.
+
+## Example Questions
+### Design FB News Feed
+[Link](https://www.hellointerview.com/notes/cmiv35ljd01u007adu2ztrn7v)
+
+- For social media product design, consider adding follow relationships as actual entities with their own tables.
+- Pagination: add pagination to API using the following
+```
+?pageNumber={pageNumber}&pageSize={pageSize}
+```
+The above will add page based pagination
+```
+?cursor={cursorPointer}&pageSize={pageSize}
+```
+The above will add cursor based pagination. Cursor based pagination is better if you want infinitely scrolling pages, and records can update frequently, so you don't want page drifts/
+
+- For DynamoDB, make sure to specify the sort key and the partition key per table.
+    - Instead of just "indexing" a certain field, you need to create Global Secondary Indexes to be able to speed up requests by a different field. The GSI must have a partition and a sort key as well.
+
+- Fan-out Reads: This happens when a single request can fan out into a large amount of reads of a database. This can cause a latency problem as these many reads can take a long time while the user is waiting for the request to be fulfilled.
+    - Don't want > 1000 reads from one request.
+    - In this case, for feed generation, we can have the feeds be generated when posts are made (at write time)
+    - Posts are created, and posts get sent to a queue that is consumed by Feed generation workers. The workers will asynchronously add the posts to the feeds of all the users that the post needs to go to.
+    ```
+    Your instinct here should be to think about ways that we can compute the feed results on write or post creation rather than at the time we want to read their feed.
+    ```
+
+- Fan-out writes: Only problem is, when a user has a large number of followers (e.g > 1 milltion) one write of posts can lead to a fan out when adding the posts to all the feeds, as the post will need to go to > 1 milltion feeds, so we run into a fan-out write problem
+    - To fix this, we avoid the precomputing feed step for posts from users with large number of followers. Instead, they will be retrieved at feed retrieval time using normal read techniques.
+
+### Design News Feed Aggregator
+[Link](https://www.hellointerview.com/notes/cmi0pi2r702ox07adp2hxu375)
+- RSS Feeds: A simple XML format used by news aggregators allows publishers to forward their content to news aggregators like Google News. It works over HTTP, so we just use GET requests on feed URLs from publishers to get the content.
+- Web Hooks
+    - This is a good solution if you want _instant_ updates from a data/information source instead of having to wait some time due to polling.
+    - We provide a webhook endpoint that publishers can post to when they have new stories, and this will automatically trigger the published story to be sent to the Articles DB for us to facilitate in news feeds.
+
+### Design Tinder
+- When there are swipes left and right on profiles, we will likely have a more abnormal read/write pattern. We will have a lot more writes for swipes.
+- For detecting matches, we will need to prioritize consistency over availability, as there is a chance that the match is completely missed with eventual consistency.
+- For notification delivery to devices
+    - Need to track devices for users in the DB to know which devices to send notifications to.
+    - To send notifications, use Apple Push Notifications (APN) and Firebase Message Protocol (FMP) as the service to send notifications to devices.
+- If using Cassandra, and still want to have a sense of strong consistency (e.g. when you want quick but conssitent retrieval of matches)
+    - Use a redis cache instance to store all "Yes" swipes. Redis is single threaded and allows atomic operations so you can enforce consistency, but is also in memory, so quick. You want to store user1:user2 relationship if there is a "yes" swipe. Then you search for user2:user1 key. Redis entries are periodically flushed to DB.
+- To ensure fast retrieval of profiles, use a precomputed feed model.
+
+### Design Strava
+- Offline Usage
+    - Use an in memory buffer that stores activity statistics and data for the current activity that can later be sent to remote DB.
+    - Periodically flush this buffer to on device persistent storage (e.g. sqlite) in the case of device crasing.
+    - Sync the local DB to the remote DB after the device goes back online.
+- Getting activities for user vs friends
+    - Introduce parameter (FRIEND|USER) to GET /activities API to signal getting activity for user or activity for friends
+- Get live updates of current activity
+    - All data for current activity is found locally on device (e.g. GPS information, clock, etc.). Because of this, you don't need to make server calls to get updates of activity. Just use local device data. Periodically, send these updates to remote DB.
+- Leaderboard generation
+    - To efficiently generate leaderboard, you should use a Redis cache instance and use Redis Sorted Set data structure. Key value pair of user, totalDistance stored, and this is updated every time an activity is updated.
+    - Using sorted set leads to efficient retrieval
+### Design FB Live Comments
+[Link](https://www.hellointerview.com/learn/system-design/problem-breakdowns/fb-live-comments)
+- Pagination/Infinite Scrolling
+    - When watching live stream, user should be able to scroll up and look at past comments before they joined the stream (i.e. infinite scrolling of comments)
+    - To get past comments, we use pagination, more specifically cursor pagination. Cursor must be a unique value per item that points to a specific item in a set of results.
+    - We can use `createdAt` + `commentId` composite cursor key so that we will preserve order, and we can avoid collisions by adding comment id to the end.
+- Server Side Events
+    - Users need to see new comments _in near real time_, so that when a comment is posted to a livestream, the comment will appear on other users' devices immediately
+    - We do this by establishing a server-sent event (SSE) connection from server to client. This is to establish a _persistent_ connection that the server can use to send comments to the client. We do not use Web Sockets because there is nothing that the client needs to send the server in this case.
+- How to handle the large scale (> 1 million videos, > 1k comments per second)
+    - The common pattern is to perform horizontal scaling, but in this specific problem, it is a bit harder because of the following scenario:
+        - If user1 is on server1, and user2 is on server2, each user has a SSE connection to their own server. If user1 posts a comment, how would server2 know that that comment was posted?
+    - We can use consistent hashing + partitioning to solve this problem
+        - First, we will have the comments published to a PubSub (e.g. Kafka) that will be partitioned by the live video stream id.
+        - The horizontally scaled SSE servers will be subscribed to these Kafka PubSubs, but they will only be subscribed to the necessary topics they need to handle via the same consistent hashing that is used for the publishing to Kafka topics.
+        - We can then use an L7 load balancer that will route SSE connections from users to the appropriate SSE server based on the stream id of the livestream they are watching.
+        - In this way, The full end to end experience of the user will have a deterministic server + topic that will handle its connection, so that all comments of one video stream will be sent to all the users that need to see them.
